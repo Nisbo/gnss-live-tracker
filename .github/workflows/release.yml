@@ -1,0 +1,43 @@
+name: V2 draft prerelease
+on:
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: write
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    container:
+      image: espressif/idf:v5.4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Trust checkout ownership
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Build, check and package V2
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          . /opt/esp/idf/export.sh
+          python -c 'import os,re; from pathlib import Path; v=re.search(r"set\(PROJECT_VER \"([^\"]+)\"",Path("CMakeLists.txt").read_text()).group(1); assert os.environ["RELEASE_TAG"]=="v"+v, "Tag and firmware version differ"'
+          idf.py build
+          python scripts/test-v2.py
+          python scripts/package-release.py
+          python scripts/export-source.py "dist/gnss-live-tracker-${RELEASE_TAG}-source.zip"
+      - name: Create draft only; publish after acceptance review
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          prerelease: true
+          body_path: docs/RELEASE-NOTES.md
+          files: |
+            dist/*.zip
+            dist/gnss-live-tracker-*/*.bin
+            dist/gnss-live-tracker-*/ttn-decoder.js
+            dist/gnss-live-tracker-*/SHA256SUMS
+            dist/gnss-live-tracker-*/release.json

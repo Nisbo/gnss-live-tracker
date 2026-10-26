@@ -1,0 +1,14 @@
+{
+  "name": "GNSS Live Tracker V2 (ESP-IDF v5.4)",
+  "image": "espressif/idf:v5.4",
+  "postCreateCommand": "bash -lc 'set -euo pipefail; if [ -f /opt/esp/idf/export.sh ]; then . /opt/esp/idf/export.sh; elif [ -n \"${IDF_PATH:-}\" ] && [ -f \"$IDF_PATH/export.sh\" ]; then . \"$IDF_PATH/export.sh\"; else echo \"ERROR: ESP-IDF export.sh not found in /opt/esp/idf or IDF_PATH/export.sh\"; exit 1; fi; idf.py --version'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-python.python",
+        "ms-vscode.cmake-tools"
+      ]
+    }
+  }
+}

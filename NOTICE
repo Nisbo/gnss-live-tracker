@@ -1,0 +1,44 @@
+GNSS Live Tracker V2
+Maintained by Nisbo
+
+Derived from HTIT Tracker v1.2 - Native ESP-IDF Firmware
+Copyright 2025-2026 Jean-Baptiste Robert-Jardine
+Upstream: https://github.com/jbjardine/HTIT-Tracker-v1.2-forIDF
+Starting commit: 9a7a9210a124d1c100d1dc97bfd4efedd5c4ea8b
+Project license: Apache License 2.0, preserved in LICENSE.
+
+GNSS Live Tracker V2 modifications (2026)
+  Includes V2 adaptations to inherited MAC/region, SX1262 and ST7735 code,
+  and the V2 GNSS/application/web implementation. See docs/UPSTREAM.md.
+  Original copyright and license headers remain in inherited source files.
+
+This product includes software developed by third parties:
+
+LoRaMac-node (components/loramac/)
+  Copyright (C) 2013-2017 Semtech
+  Copyright (C) 2015-2017 Alibaba Group Holding Limited
+  License: Revised BSD; full terms in components/loramac/LICENSE.TXT.
+
+AES implementation (components/loramac/loramac/aes.c, aes.h)
+  Copyright (c) 1998-2008 Brian Gladman
+  License: the license terms and disclaimer retained in the source headers;
+  reproduced in the binary package as licenses/AES.NOTICE.txt.
+
+CMAC implementation (components/loramac/loramac/cmac.c, cmac.h)
+  Copyright (C) 2009 Lander Casado, Philippas Tsigas
+  License: the permissions and disclaimers retained in the source headers;
+  reproduced in the binary package as licenses/CMAC.NOTICE.txt.
+
+satellite.js
+  Copyright (C) 2013 Shashwat Kandadai,
+  UCSC Jack Baskin School of Engineering and contributors.
+  License: MIT; full notice in main/web/satellite.LICENSE.txt.
+
+Earth land contours
+  Natural Earth 1:110m land dataset, public domain.
+  Rounded for the browser globe; provenance in docs/UPSTREAM.md.
+
+ESP-IDF
+  Built with Espressif ESP-IDF v5.4. Its linked components carry their
+  respective upstream licenses, collected in the binary package's
+  licenses/esp-idf directory from the selected build components.

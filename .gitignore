@@ -1,0 +1,42 @@
+# ESP-IDF build artifacts
+build/
+sdkconfig
+sdkconfig.old
+managed_components/
+dependencies.lock
+
+# Local config (contains credentials)
+main/app_config.h
+
+# Python / tooling
+__pycache__/
+*.pyc
+.cache/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# clangd compilation database (generated)
+compile_commands.json
+
+# Reference repos (for analysis only)
+refs/
+
+# Local V2 test credentials
+main/credentials.h
+main/web_credentials.h
+
+# Local backups contain credentials and location history
+*.gltb
+
+# Public V2 release output and machine-local test state
+dist/
+.test-output/
+*.log
+
+# Publication audit inputs stay outside this repository
+private-*.json

@@ -1,0 +1,14 @@
+# Keep existing NVS and PHY addresses/sizes to preserve WLAN and LoRaWAN state.
+# Name, Type, SubType, Offset, Size, Flags
+
+# OTA installs dynamically register this same unused, non-overlapping flash area.
+
+# Dedicated history/import ranges in the formerly unallocated gap.
+nvs, data, nvs, 0x9000, 0x6000,
+phy_init, data, phy, 0xf000, 0x1000,
+ota_0, app, ota_0, 0x10000, 0x200000,
+ota_1, app, ota_1, 0x210000, 0x200000,
+otadata, data, ota, 0x410000, 0x2000,
+sat_history, data, 0x41, 0x420000, 0x80000,
+track_import, data, 0x42, 0x4a0000, 0x60000,
+tracks, data, 0x40, 0x500000, 0x300000,
