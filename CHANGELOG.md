@@ -1,5 +1,16 @@
 # GNSS Live Tracker changelog
 
+## 0.32.1
+
+- Use singular check-age labels for one second, minute and hour in German and English.
+
+## 0.32.0
+
+- Keep Automatic/On/Off hotspot selections after restart. Highlight the current mode; USER can temporarily enable the hotspot without replacing the saved selection.
+- Confirm Internet state changes with a second check one minute later, for both outages and recovery. Add colored status and readable check ages; simplify the German and English help text.
+- Add a persistent position-sending switch, independent of GNSS and recording. Internet change reports are available only while position sending is off; position reports can carry Internet status instead.
+- Include hotspot mode and position-sending preferences in settings backups. Preserve existing profiles, radio parameters and recording formats.
+
 ## 0.31.1
 
 - Remove a stale manual-check progress message; the live Internet badge and check details show the actual result.

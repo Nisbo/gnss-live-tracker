@@ -262,7 +262,8 @@ const TrackerDashboard=(()=>{
   const preview=radioProjection(sf,interval,Number($('radio-profile').value),region,rate.bw,undefined,radioHasDwell(region)&&$('radio-dwell').checked);
  $('radio-interval-summary').textContent=tr("position_interval_preview",{bytes:preview.bytes,compact:preview.bytes<preview.wanted?tr("compact_packet"):'',minutes:interval/60});
   $('radio-estimate').textContent=tr("radio_airtime_preview",{sf,bandwidth:rate.bw,milliseconds:Math.round(preview.position*1000),seconds:preview.total.toFixed(1)});
-  radioBudget('radio-budget',preview.total);
+  radioBudget('radio-budget',$('radio-position-enabled').checked?preview.total:0);
+  $('radio-interval').disabled=!$('radio-position-enabled').checked;if(!$('radio-position-enabled').checked){$('radio-estimate').textContent=tr('positions_off_airtime');$('radio-interval-summary').textContent=tr('positions_off');}
   const lora=radioRaw?.lora||{},saved=lora.settings||{},currentSf=lora.sf,bw=lora.bandwidth_khz;
   $('radio-adr-warning').hidden=!($('radio-adr').checked||lora.adr===true);
   const valid=Number.isInteger(currentSf)&&currentSf>=7&&currentSf<=(saved.region===1?10:12)&&([125,250].includes(bw)||radioHasFsb(saved.region)&&bw===500);
@@ -272,16 +273,19 @@ const TrackerDashboard=(()=>{
   const currentInterval=saved.position_interval_s||300,nextDr=saved.next_packet_dr,projectedRate=Number.isInteger(nextDr)?radioRate(saved.region??0,nextDr)||{sf:currentSf,bw}:{sf:currentSf,bw},current=radioProjection(projectedRate.sf,currentInterval,saved.packet_profile??1,saved.region??0,projectedRate.bw,saved.next_packet_bytes,!!saved.uplink_dwell);
   $('radio-current-rate').textContent='SF'+currentSf+' / '+bw+' kHz'+(Number.isInteger(lora.dr)?' · DR'+lora.dr:'');
   $('radio-current-estimate').textContent=saved.next_packet_bytes===0?tr("mac_control_data_is_queued_first_position_follows_when"):Math.round(current.position*1000)+tr("ms_per_position_packet_approx")+current.total.toFixed(1)+tr("s_per_day");
-  radioBudget('radio-current-budget',current.total);
+  radioBudget('radio-current-budget',saved.position_enabled===false?0:current.total);
+  if(saved.position_enabled===false)$('radio-current-estimate').textContent=tr('positions_off_airtime');
   $('radio-current-note').textContent=tr("saved")+(saved.region_name||'EU868')+tr("position_every")+(currentInterval/60)+tr("minutes_61aa7")+([tr("basic"),'Standard',tr("system_details")][saved.packet_profile??1])+' · '+current.bytes+tr("bytes")+(current.bytes<current.wanted?tr("compact_packet"):'')+'. '+(projectedRate.sf!==currentSf||projectedRate.bw!==bw?tr("next_uplink_expected_at_sf")+projectedRate.sf+' / '+projectedRate.bw+' kHz. ':'')+(saved.apply_pending?tr("a_radio_parameter_change_is_still_pending"):'')+(lora.adr?tr("network_commands_and_automatic_fallback_events_are_shown_in"):'')+tr("snapshot_not_measured_daily_usage");
+  if(saved.position_enabled===false)$('radio-current-note').textContent=tr('positions_off');
  }
  function radioUpdate(raw){
   radioRaw=raw;const c=raw.lora?.settings;if(!c)return;
-  if(!radioLoaded){$('radio-region').value=radioRegions[c.region??0]||'EU868';$('radio-block').value=String(radioHasFsb(c.region)?c.channel_block:2);$('radio-dwell').checked=!!c.dwell;radioOptions(c.region??0,String(c.sf)+(c.wideband?'w':''));$('radio-interval').value=String(c.position_interval_s||300);$('radio-adr').checked=c.adr;$('radio-profile').value=String(c.packet_profile??1);radioLoaded=true;}
+  if(!radioLoaded){$('radio-region').value=radioRegions[c.region??0]||'EU868';$('radio-block').value=String(radioHasFsb(c.region)?c.channel_block:2);$('radio-dwell').checked=!!c.dwell;radioOptions(c.region??0,String(c.sf)+(c.wideband?'w':''));$('radio-interval').value=String(c.position_interval_s||300);$('radio-adr').checked=c.adr;$('radio-position-enabled').checked=c.position_enabled!==false;$('radio-profile').value=String(c.packet_profile??1);radioLoaded=true;}
   if(c.restart_pending)$('radio-note').textContent=tr("network_change_saved_the_tracker_restarts_after_any_ongoing");
   else if(c.apply_failed)$('radio-note').textContent=tr("settings_saved_applying_them_will_be_retried");
   else if(c.apply_pending)$('radio-note').textContent=tr("saved_will_be_applied_after_the_ongoing_radio_transmission");
   else if(!$('radio-form').dataset.dirty)$('radio-note').textContent=tr("active")+(c.region_name||'EU868')+(radioHasFsb(c.region)?' · '+(c.channel_block?'FSB'+c.channel_block:tr("all_channels")):'')+' · '+(c.adr?tr("adr_initial_value_sf")+c.sf:'SF'+c.sf+tr("fixed"))+tr("position_every")+((c.position_interval_s||300)/60)+tr("minutes_61aa7")+([tr("basic"),'Standard',tr("system_details")][c.packet_profile??1]);
+  if(c.position_enabled===false&&!$('radio-form').dataset.dirty&&!c.apply_pending&&!c.restart_pending)$('radio-note').textContent=tr('positions_off');
   const current=raw.lora?.current_power_dbm??raw.lora?.tx_power?.target_dbm,baseline=c.baseline_dbm??14;
   $('radio-power-current').textContent=Number.isFinite(current)?current+' dBm · '+Math.pow(10,current/10).toFixed(1)+' mW':tr("not_available_yet_abfc8");
   $('radio-power-note').textContent=tr("initial_value")+baseline+' dBm · '+(Number.isFinite(current)?(current<baseline?tr("power_reduced",{difference:baseline-current}):current===baseline?tr("no_reduction"):tr("difference")+(current-baseline)+' dB'):tr("difference_not_known_yet"))+' · '+(raw.lora?.adr?tr("adr_enabled"):tr("adr_off"))+tr("target_values_not_measured_rf_power");
@@ -301,7 +305,7 @@ const TrackerDashboard=(()=>{
   const rate=selectedRate(),region=selectedRegion(),block=radioHasFsb(region)?Number($('radio-block').value):0,saved=radioRaw?.lora?.settings||{};
   if((region!==(saved.region??0)||block!==(saved.channel_block??0)||(radioHasDwell(region)&&$('radio-dwell').checked)!==!!saved.dwell)&&!await confirmAction(tr("change_lorawan_network"),tr("change_the_region_channel_group_restart_the_tracker_and")+(region!==0?tr("this_region_is_experimental_and_has_not_been_tested"):''),tr("change")))return;
   $('radio-save').disabled=true;
-  try{const response=await fetch('/api/lora',{method:'POST',headers:{'Content-Type':'application/json','X-Tracker-Token':radioRaw?.request_token||''},body:JSON.stringify({sf:rate.sf,region,channel_block:block,wideband:rate.wide,dwell:radioHasDwell(region)&&$('radio-dwell').checked,adr:$('radio-adr').checked,packet_profile:Number($('radio-profile').value),position_interval_s:Number($('radio-interval').value)}),signal:AbortSignal.timeout(12000)});if(!response.ok)throw new Error(TrackerI18n.serverMessage(await response.text()));const result=await response.json();$('radio-form').dataset.dirty='';$('radio-note').textContent=result.restarting?tr("saved_the_tracker_is_restarting_to_change_networks"):tr("saved_ongoing_radio_transmissions_will_finish_first");}
+  try{const response=await fetch('/api/lora',{method:'POST',headers:{'Content-Type':'application/json','X-Tracker-Token':radioRaw?.request_token||''},body:JSON.stringify({sf:rate.sf,region,channel_block:block,wideband:rate.wide,dwell:radioHasDwell(region)&&$('radio-dwell').checked,adr:$('radio-adr').checked,packet_profile:Number($('radio-profile').value),position_interval_s:Number($('radio-interval').value),position_enabled:$('radio-position-enabled').checked}),signal:AbortSignal.timeout(12000)});if(!response.ok)throw new Error(TrackerI18n.serverMessage(await response.text()));const result=await response.json();$('radio-form').dataset.dirty='';$('radio-note').textContent=result.restarting?tr("saved_the_tracker_is_restarting_to_change_networks"):tr("saved_ongoing_radio_transmissions_will_finish_first");}
   catch(error){$('radio-note').textContent=tr("could_not_save")+error.message;}finally{$('radio-save').disabled=false;}
  }
  function renderLoraTiming(raw){
@@ -315,6 +319,7 @@ const TrackerDashboard=(()=>{
   const phase=lora.radio_phase||'unknown';$('lora-phase').textContent=({deferred:tr("transmission_pause"),channel_check:tr("channel_check"),transaction:tr("transmission_reception"),preparing:tr("preparing_transmission"),ready:tr("ready_to_transmit"),unknown:tr("waiting_for_radio_status")})[phase];
   const nextPort=timing.next_fport,what=lora.joined?(nextPort===12?tr("internet_status"):nextPort===11?tr("satellite_list"):tr("position_status")):tr("network_join"),queuedNext=!!lora.pending_message&&phase!=='transaction';$('lora-next-kind').textContent=queuedNext?messageType(lora.pending_message):what;
   $('lora-queued').textContent=lora.pending_message?(queuedNext?tr("queued_for_transmission"):tr("current_transmission")+messageType(lora.pending_message)+' · ')+stamp(lora.pending_message.queued_uptime_ms):'';
+  if(lora.settings?.position_enabled===false&&!lora.pending_message&&timing.next_fport!==12){$('lora-next-kind').textContent=raw.internet?.events?tr('internet_status'):tr('positions_off');$('lora-next').textContent=raw.internet?.events?tr('waiting_internet_change'):tr('no_position_schedule');$('lora-queued').textContent='';return;}
   const due=lora.joined?timing.next_planned_uptime_ms:timing.next_join_uptime_ms;
   if(!Number.isFinite(due)||!Number.isFinite(now)){$('lora-next').textContent=tr("not_scheduled_yet");return;}
   const seconds=queuedNext?0:Math.max(0,Math.ceil((due-now)/1000));
@@ -329,7 +334,7 @@ const TrackerDashboard=(()=>{
   $('radio-region').addEventListener('change',()=>{$('radio-dwell').checked=radioHasDwell(selectedRegion());radioOptions(selectedRegion());$('radio-form').dataset.dirty='true';radioEstimate();});
   $('radio-dwell').addEventListener('change',()=>{radioOptions(selectedRegion());$('radio-form').dataset.dirty='true';radioEstimate();});
   $('radio-form').addEventListener('submit',saveRadio);$('radio-reset').addEventListener('click',resetRadio);
-  for(const id of ['radio-sf','radio-adr','radio-profile','radio-interval','radio-block'])$(id).addEventListener('change',()=>{$('radio-form').dataset.dirty='true';radioEstimate();});
+  for(const id of ['radio-sf','radio-adr','radio-profile','radio-interval','radio-block','radio-position-enabled'])$(id).addEventListener('change',()=>{$('radio-form').dataset.dirty='true';radioEstimate();});
   $('mqtt-form').addEventListener('submit',saveMqtt);
   timezoneOptions();$('timezone').addEventListener('change',()=>setZone($('timezone').value));$('clock-button').addEventListener('click',()=>{$('time-dialog').showModal();});
   systems.forEach(name=>{const button=document.createElement('button');button.type='button';button.dataset.system=name;button.textContent=name;button.setAttribute('aria-pressed',String(name===selected));button.addEventListener('click',()=>chooseSystem(name));$('system-selector').append(button);});

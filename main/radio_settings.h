@@ -21,3 +21,5 @@ bool tracker_radio_restarting(void);
 void tracker_radio_json(cJSON *lora);
 void tracker_radio_register(httpd_handle_t server);
 static inline unsigned tracker_radio_packet_bytes(unsigned profile){return profile==0?23:profile==2?38:24;}
+
+bool tracker_radio_positions_enabled(void);

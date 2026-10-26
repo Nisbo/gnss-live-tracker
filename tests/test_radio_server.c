@@ -10,6 +10,8 @@ esp_err_t nvs_open(const char *name,int mode,int *h){for(int i=0;i<spaces;i++)if
 void nvs_close(int h){(void)h;}esp_err_t nvs_commit(int h){(void)h;return commit_fail?ESP_FAIL:ESP_OK;}
 esp_err_t nvs_get_blob(int h,const char *key,void *p,size_t *n){nv_t *v=entry(h,key,false);if(!v)return ESP_ERR_NVS_NOT_FOUND;if(*n<v->n)return ESP_FAIL;memcpy(p,v->data,v->n);*n=v->n;return ESP_OK;}
 esp_err_t nvs_set_blob(int h,const char *key,const void *p,size_t n){nv_t *v=entry(h,key,true);assert(v&&n<=128);memcpy(v->data,p,n);v->n=n;return ESP_OK;}
+esp_err_t nvs_get_u8(int h,const char *k,uint8_t *v){size_t n=1;return nvs_get_blob(h,k,v,&n);}
+esp_err_t nvs_set_u8(int h,const char *k,uint8_t v){return nvs_set_blob(h,k,&v,1);}
 esp_err_t nvs_erase_key(int h,const char *key){nv_t *v=entry(h,key,false);if(!v)return ESP_ERR_NVS_NOT_FOUND;v->n=0;return ESP_OK;}
 bool tracker_request_authorized(httpd_req_t *r){(void)r;return !deny;}
 bool tracker_backup_locked(void){return false;}bool tracker_ota_is_busy(void){return false;}
@@ -26,7 +28,7 @@ esp_err_t httpd_resp_set_type(httpd_req_t *r,const char *s){(void)r;(void)s;retu
 int httpd_req_recv(httpd_req_t *r,char *p,size_t n){if(n>r->content_len-r->received)n=r->content_len-r->received;memcpy(p,r->body+r->received,n);r->received+=n;return n;}
 esp_err_t httpd_register_uri_handler(httpd_handle_t h,const httpd_uri_t *u){(void)h;(void)u;return ESP_OK;}
 static httpd_req_t post(const char *body){httpd_req_t r={.content_len=strlen(body),.body=body,.status=200};configure(&r);return r;}
-static void defaults(void){config=(tracker_radio_config_t){.version=5,.sf=7,.profile=1,.position_interval_s=300};revision=1;applied=resets=0;reset_pending=apply_failed=false;restart_at=0;}
+static void defaults(void){position_off=false;config=(tracker_radio_config_t){.version=5,.sf=7,.profile=1,.position_interval_s=300};revision=1;applied=resets=0;reset_pending=apply_failed=false;restart_at=0;}
 int main(void){
  int h;nvs_open("tracker_radio",NVS_READWRITE,&h);uint8_t v3[]={3,9,1,2,88,2};nvs_set_blob(h,"config_v3",v3,6);tracker_radio_init();assert(config.version==5&&config.sf==9&&config.adr==1&&config.profile==2&&config.position_interval_s==600&&config.region==0&&config.channel_block==0&&tracker_radio_ready());
  defaults();uint8_t v4[]={4,8,1,1,44,1,1,2,0,0};nvs_set_blob(h,"config_v4",v4,10);tracker_radio_init();assert(config.version==5&&config.region==1&&config.sf==8&&config.channel_block==2&&!config.dwell);nvs_erase_key(h,"config_v4");defaults();tracker_radio_init();
@@ -43,6 +45,11 @@ int main(void){
   defaults();char body[200];snprintf(body,sizeof(body),"{\"sf\":7,\"adr\":false,\"packet_profile\":1,\"region\":%u,\"channel_block\":%u,\"dwell\":%s}",id,tracker_region_fsb(id)?2:0,tracker_region_dwell(id)?"true":"false");
   unsigned calls=mac_calls;assert(post(body).status==200&&!tracker_radio_ready()&&tracker_radio_restarting());assert(mac_calls==calls);defaults();tracker_radio_init();assert(config.region==id&&tracker_radio_ready()&&config.dwell==tracker_region_dwell(id));
  }
+ // Position sending persists separately without changing the radio record layout.
+ assert(post("{\"sf\":7,\"adr\":false,\"packet_profile\":1,\"position_enabled\":false}").status==200);assert(!tracker_radio_positions_enabled());
+ defaults();tracker_radio_init();assert(!tracker_radio_positions_enabled());
+ commit_fail=true;assert(post("{\"sf\":7,\"adr\":false,\"packet_profile\":1,\"position_enabled\":true}").status==500);assert(!tracker_radio_positions_enabled());commit_fail=false;
+ assert(post("{\"sf\":7,\"adr\":false,\"packet_profile\":1,\"position_enabled\":true}").status==200);assert(tracker_radio_positions_enabled());
  // A failed commit must not apply a new network to the running MAC.
  tracker_radio_config_t previous=config;commit_fail=true;r=post("{\"sf\":7,\"adr\":false,\"packet_profile\":1,\"region\":0,\"channel_block\":0,\"wideband\":false}");assert(r.status==500&&!memcmp(&previous,&config,sizeof(config)));commit_fail=false;
  puts("Production radio settings: v3 migration, validation/auth, region-switch confirmation contract, deferred restart, fresh-session marker, preserved nonces, DR0/DR4 and failed-commit isolation PASS (no hardware)");

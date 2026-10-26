@@ -23,7 +23,7 @@
 /* These are user settings only. MAC sessions/counters and arbitrary NVS are excluded. */
 typedef struct {const char *group,*ns,*key;nvs_type_t type;unsigned max;} setting_t;
 static const setting_t specs[]={
- {"wifi","tracker_net","config_v1",NVS_TYPE_BLOB,4},{"wifi","tracker_web","profiles_v1",NVS_TYPE_BLOB,880},{"wifi","tracker_web","ssid",NVS_TYPE_STR,33},{"wifi","tracker_web","password",NVS_TYPE_STR,64},
+ {"wifi","tracker_web","ap_mode",NVS_TYPE_U8,1},{"radio","tracker_radio","position_off",NVS_TYPE_U8,1},{"wifi","tracker_net","config_v1",NVS_TYPE_BLOB,4},{"wifi","tracker_web","profiles_v1",NVS_TYPE_BLOB,880},{"wifi","tracker_web","ssid",NVS_TYPE_STR,33},{"wifi","tracker_web","password",NVS_TYPE_STR,64},
  {"lora","tracker_otaa","config_v1",NVS_TYPE_BLOB,36},
  {"radio","tracker_radio","config_v5",NVS_TYPE_BLOB,12},{"radio","tracker_radio","config_v4",NVS_TYPE_BLOB,10},{"radio","tracker_radio","config_v3",NVS_TYPE_BLOB,6},{"radio","tracker_radio","config_v2",NVS_TYPE_BLOB,6},{"radio","tracker_radio","config_v1",NVS_TYPE_BLOB,4},
  {"mqtt","tracker_mqtt","config",NVS_TYPE_BLOB,1024},
@@ -50,7 +50,7 @@ static const esp_partition_t *partition(unsigned a){const esp_partition_t *p=esp
 static esp_err_t read_value(const setting_t *s,uint8_t *out,size_t *n){nvs_handle_t h;esp_err_t e=nvs_open(s->ns,NVS_READONLY,&h);if(e!=ESP_OK)return e;*n=s->max;switch(s->type){case NVS_TYPE_U8:*n=1;e=nvs_get_u8(h,s->key,out);break;case NVS_TYPE_U32:{uint32_t value=0;*n=4;e=nvs_get_u32(h,s->key,&value);memcpy(out,&value,4);break;}case NVS_TYPE_STR:e=nvs_get_str(h,s->key,(char *)out,n);break;default:e=nvs_get_blob(h,s->key,out,n);}nvs_close(h);return e;}
 static esp_err_t write_value(nvs_handle_t h,const setting_t *s,const uint8_t *data,size_t n){switch(s->type){case NVS_TYPE_U8:return nvs_set_u8(h,s->key,data[0]);case NVS_TYPE_U32:{uint32_t v;memcpy(&v,data,4);return nvs_set_u32(h,s->key,v);}case NVS_TYPE_STR:return nvs_set_str(h,s->key,(const char *)data);default:return nvs_set_blob(h,s->key,data,n);}}
 static bool setting_valid(unsigned index,const uint8_t *b,size_t n){const setting_t *s=&specs[index];if(!n||n>s->max)return false;
- if(s->type==NVS_TYPE_U8)return n==1&&(same(s->key,"last_page")?b[0]<9:b[0]<=1);
+ if(s->type==NVS_TYPE_U8)return n==1&&(same(s->key,"last_page")?b[0]<9:same(s->key,"ap_mode")?b[0]<=2:b[0]<=1);
  if(s->type==NVS_TYPE_U32){uint32_t v=0;if(n!=4)return false;memcpy(&v,b,4);return v>=5&&v<=3600;}
  if(s->type==NVS_TYPE_STR)return b[n-1]==0&&!memchr(b,0,n-1);
  if(!same(s->group,"mqtt")&&n!=s->max)return false;

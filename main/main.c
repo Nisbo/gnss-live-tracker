@@ -112,7 +112,8 @@ void app_main(void) {
         tracker_display_poll(now/1000);
         tracker_radio_poll();
         tracker_credentials_poll();
-        bool credentials_ready=tracker_credentials_ready()&&tracker_radio_ready()&&!tracker_backup_locked();
+        bool positions_enabled=tracker_radio_positions_enabled();
+        bool credentials_ready=(positions_enabled||tracker_internet_events_enabled())&&tracker_credentials_ready()&&tracker_radio_ready()&&!tracker_backup_locked();
         radio=tracker_radio_config();
         if(position_interval!=radio.position_interval_s){position_interval=radio.position_interval_s;next_position=tracker_radio_position_due(last_position_us,position_interval,next_position);}
         if(!startup_status_reported&&now>=15000000LL) {
@@ -134,10 +135,10 @@ void app_main(void) {
             next_join=now+300000000LL;
         }
         int8_t next_dr=0;unsigned budget=LoRaMacTxBudget(&next_dr),packet_bytes=tracker_packet_size(tracker_radio_packet_bytes(radio.profile),budget);
-        if(credentials_ready&&lorawan_port_is_joined()&&now>=next_position&&!packet_bytes&&now>=next_control_us&&lorawan_port_can_tx(0)){
+        if(credentials_ready&&lorawan_port_is_joined()&&((positions_enabled&&now>=next_position&&!packet_bytes)||(!positions_enabled&&tracker_internet_pending(now/1000)&&budget<8))&&now>=next_control_us&&lorawan_port_can_tx(0)){
             if(lorawan_port_send_unconfirmed(0,NULL,0)){last_queued_ms=now/1000;last_queued_port=0;tracker_web_message_queued(0,NULL,0,last_queued_ms);next_control_us=now+(int64_t)position_interval*1000000LL;}
         }
-        if(credentials_ready && lorawan_port_is_joined() && now>=next_position && packet_bytes && lorawan_port_can_tx(packet_bytes)) {
+        if(credentials_ready && lorawan_port_is_joined() && positions_enabled && now>=next_position && packet_bytes && lorawan_port_can_tx(packet_bytes)) {
             uint8_t payload[38];
             size_t length=packet_bytes<=11?tracker_position_small(&gnss,now/1000,sequence,packet_bytes,payload):tracker_position_packet(&gnss,now/1000,sequence,radio.profile,payload);
             unsigned internet=tracker_internet_position_state();
@@ -153,14 +154,14 @@ void app_main(void) {
             }
         }
         unsigned event_state=tracker_internet_pending(now/1000);
-        if(credentials_ready&&lorawan_port_is_joined()&&event_state&&now<next_position&&budget>=8&&lorawan_port_can_tx(8)){
+        if(credentials_ready&&lorawan_port_is_joined()&&event_state&&(!positions_enabled||now<next_position)&&budget>=8&&lorawan_port_can_tx(8)){
             uint8_t payload[8];uint32_t utc=gnss.utc_confirmed&&gnss.utc_epoch_ms>0&&now/1000-gnss.utc_received_ms<10000?(gnss.utc_epoch_ms+now/1000-gnss.utc_received_ms)/1000:0;
             tracker_internet_event_payload(payload,event_state,utc);
             if(lorawan_port_send_unconfirmed(12,payload,sizeof(payload))){outgoing_internet=event_state;outgoing_internet_event=true;last_queued_ms=now/1000;last_queued_port=12;tracker_web_message_queued(12,payload,sizeof(payload),last_queued_ms);}
         }
         bool display_refresh=tracker_display_refresh_requested();
         if(now>=next_display||display_refresh) {
-            int64_t due=next_position;uint8_t due_port=10;if(tracker_internet_pending(now/1000)&&now<next_position){due=now;due_port=12;}
+            int64_t due=positions_enabled?next_position:0;uint8_t due_port=positions_enabled?10:0;if(tracker_internet_pending(now/1000)&&(!positions_enabled||now<next_position)){due=now;due_port=12;}
             tracker_web_lora_timing(last_queued_ms,last_uplink_completed_ms,last_queued_port,due/1000,due_port,next_join/1000);
             tracker_display_lora_timing(last_uplink_completed_ms,due/1000,due_port);
             tracker_web_publish(&gnss,now/1000,lorawan_port_is_joined());

@@ -1,6 +1,11 @@
 /* Built-in dashboard and recording translations. Device data and export schema stay language-independent. */
 TrackerI18n.register("dashboard",{
   "de": {
+    "positions_off": "Positionsversand ausgeschaltet",
+    "positions_off_airtime": "Keine Sendezeit für Positionsmeldungen.",
+    "waiting_internet_change": "Wartet auf einen bestätigten Internet-Statuswechsel",
+    "no_position_schedule": "Keine Positionsmeldung geplant",
+
     "internet_status": "Internetstatus",
     "internet_unknown": "Noch nicht bestätigt",
     "internet_unavailable": "Nicht erreichbar",
@@ -259,6 +264,11 @@ TrackerI18n.register("dashboard",{
     }
   },
   "en": {
+    "positions_off": "Position sending is off",
+    "positions_off_airtime": "No airtime for position reports.",
+    "waiting_internet_change": "Waiting for a confirmed Internet status change",
+    "no_position_schedule": "No position report scheduled",
+
     "internet_status": "Internet status",
     "internet_unknown": "Not confirmed yet",
     "internet_unavailable": "Unavailable",

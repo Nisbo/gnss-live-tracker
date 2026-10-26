@@ -59,19 +59,22 @@ typedef struct { char ssid[33],password[64]; } saved_profile_t;
 typedef struct { uint32_t version; saved_profile_t profiles[PROFILE_COUNT]; char ap_ssid[33],ap_password[64]; } saved_wifi_t;
 bool tracker_web_backup_valid(const void *data,size_t n){if(n!=sizeof(saved_wifi_t))return false;saved_wifi_t c;memcpy(&c,data,n);bool valid=c.version==1&&memchr(c.ap_ssid,0,33)&&c.ap_ssid[0]&&memchr(c.ap_password,0,64);if(valid&&c.ap_password[0])valid=strlen(c.ap_password)>=8;for(unsigned i=0;i<PROFILE_COUNT&&valid;i++){valid=memchr(c.profiles[i].ssid,0,33)&&memchr(c.profiles[i].password,0,64);if(valid&&c.profiles[i].ssid[0]&&c.profiles[i].password[0])valid=strlen(c.profiles[i].password)>=8;for(unsigned j=0;j<i&&valid;j++)if(c.profiles[i].ssid[0]&&!strcmp(c.profiles[i].ssid,c.profiles[j].ssid))valid=false;}memset(&c,0,sizeof(c));return valid;}
 static saved_wifi_t saved;
+static uint8_t saved_hotspot_mode;
 static int current_profile=-1,locked_profile=-1,pending_profile=-1;
 static bool switch_pending,ap_pending,manual_hotspot,hotspot_pending,hotspot_off_pending,hotspot_auto_pending,suppress_hotspot;
 static int64_t next_connect,attempt_started,outage_started,next_auto_scan;
 static int64_t tried_at[PROFILE_COUNT];
 static display_button_t user_button;
 static saved_wifi_t saved_copy(void) { saved_wifi_t copy;portENTER_CRITICAL(&network_mux);copy=saved;portEXIT_CRITICAL(&network_mux);return copy; }
-static esp_err_t save_wifi(const saved_wifi_t *config) {
+static esp_err_t save_wifi_mode(const saved_wifi_t *config,int mode) {
     nvs_handle_t handle;esp_err_t err=nvs_open("tracker_web",NVS_READWRITE,&handle);
-    if(err==ESP_OK){err=nvs_set_blob(handle,"profiles_v1",config,sizeof(*config));if(err==ESP_OK)err=nvs_commit(handle);nvs_close(handle);}return err;
+    if(err==ESP_OK){if(config)err=nvs_set_blob(handle,"profiles_v1",config,sizeof(*config));if(err==ESP_OK&&mode>=0)err=nvs_set_u8(handle,"ap_mode",mode);if(err==ESP_OK)err=nvs_commit(handle);nvs_close(handle);}return err;
 }
+static esp_err_t save_wifi(const saved_wifi_t *config){return save_wifi_mode(config,-1);}
 static void load_wifi(void) {
     saved.version=1;strcpy(saved.ap_ssid,TRACKER_SETUP_SSID);
     nvs_handle_t handle;if(nvs_open("tracker_web",NVS_READONLY,&handle)!=ESP_OK)return;
+    uint8_t mode=0;if(nvs_get_u8(handle,"ap_mode",&mode)==ESP_OK&&mode<=2)saved_hotspot_mode=mode;
     saved_wifi_t candidate={0};size_t size=sizeof(candidate);
     bool valid=nvs_get_blob(handle,"profiles_v1",&candidate,&size)==ESP_OK&&size==sizeof(candidate)&&candidate.version==1;
     if(valid) {
@@ -269,9 +272,12 @@ static esp_err_t configure_post(httpd_req_t *req) {
     } else valid=false;
     cJSON *mode=cJSON_GetObjectItemCaseSensitive(json,"mode");
     if(!strcmp(op,"hotspot")&&mode)valid=valid&&cJSON_IsString(mode)&&(!strcmp(mode->valuestring,"auto")||!strcmp(mode->valuestring,"on")||!strcmp(mode->valuestring,"off"));
-    esp_err_t err=ESP_OK;if(valid&&persist)err=save_wifi(&config);
+    int selected_mode=-1;
+    if(valid&&!strcmp(op,"hotspot")){cJSON *enabled=cJSON_GetObjectItemCaseSensitive(json,"enabled");if(mode)selected_mode=!strcmp(mode->valuestring,"on")?1:!strcmp(mode->valuestring,"off")?2:0;else if(cJSON_IsBool(enabled))selected_mode=cJSON_IsTrue(enabled)?1:2;}
+    esp_err_t err=ESP_OK;if(valid&&(persist||selected_mode>=0))err=save_wifi_mode(persist?&config:NULL,selected_mode);
     if(valid&&err==ESP_OK){
         portENTER_CRITICAL(&network_mux);
+        if(selected_mode>=0)saved_hotspot_mode=selected_mode;
         if(persist){saved=config;network.configured=any_profile(&config);}
         if(deleted_current){switch_pending=true;pending_profile=-1;locked_profile=-1;}
         if(connect){switch_pending=true;pending_profile=slot;locked_profile=-1;}
@@ -328,7 +334,7 @@ bool tracker_web_start(void) {
     esp_event_handler_register(WIFI_EVENT,ESP_EVENT_ANY_ID,wifi_event,NULL);
     esp_event_handler_register(IP_EVENT,ESP_EVENT_ANY_ID,wifi_event,NULL);
     esp_wifi_set_storage(WIFI_STORAGE_RAM);
-    tracker_internet_init();load_wifi();network.configured=any_profile(&saved);network.setup=!network.configured;
+    tracker_internet_init();load_wifi();network.configured=any_profile(&saved);manual_hotspot=saved_hotspot_mode==1;suppress_hotspot=saved_hotspot_mode==2;network.setup=tracker_wifi_hotspot_on(saved_hotspot_mode,network.configured,false,false,0,0,0);
     gpio_config_t button={.pin_bit_mask=1ULL<<0,.mode=GPIO_MODE_INPUT,.pull_up_en=GPIO_PULLUP_ENABLE};gpio_config(&button);
     err=esp_wifi_set_mode(WIFI_MODE_APSTA);
     if(err==ESP_OK){apply_hotspot(&saved,network.setup);err=esp_wifi_start();}
@@ -412,7 +418,7 @@ void tracker_web_poll(void) {
         if(!busy){wifi_scan_config_t scan={0};esp_err_t err=esp_wifi_scan_start(&scan,false);if(err==ESP_OK){portENTER_CRITICAL(&network_mux);scan_busy=true;portEXIT_CRITICAL(&network_mux);}}
         next_auto_scan=now+30000;
     }
-    tracker_internet_poll(state.connected);
+    tracker_internet_poll(state.connected,tracker_radio_positions_enabled());
     memset(&config,0,sizeof(config));
 }
 static tracker_message_log_t message_log;
@@ -513,7 +519,7 @@ void tracker_web_publish(const tracker_gnss_t *g,int64_t now,bool joined) {
         cJSON_AddBoolToObject(wifi,"bssid_pinned",false);cJSON_AddNumberToObject(wifi,"disconnects",state.disconnects);
         portENTER_CRITICAL(&network_mux);int active=current_profile,locked=locked_profile;bool manual=manual_hotspot;portEXIT_CRITICAL(&network_mux);
         cJSON_AddNumberToObject(wifi,"current_profile",active);cJSON_AddBoolToObject(wifi,"locked_until_reboot",locked>=0);
-        cJSON_AddStringToObject(wifi,"hotspot_ssid",config.ap_ssid);cJSON_AddBoolToObject(wifi,"hotspot_open",!config.ap_password[0]);cJSON_AddBoolToObject(wifi,"hotspot_manual",manual);cJSON_AddStringToObject(wifi,"hotspot_mode",suppress_hotspot?"off":manual?"on":"auto");
+        cJSON_AddStringToObject(wifi,"hotspot_ssid",config.ap_ssid);cJSON_AddBoolToObject(wifi,"hotspot_open",!config.ap_password[0]);cJSON_AddBoolToObject(wifi,"hotspot_manual",manual);cJSON_AddStringToObject(wifi,"hotspot_mode",suppress_hotspot?"off":manual?"on":"auto");cJSON_AddStringToObject(wifi,"hotspot_saved_mode",saved_hotspot_mode==2?"off":saved_hotspot_mode==1?"on":"auto");cJSON_AddBoolToObject(wifi,"hotspot_override",(suppress_hotspot?2:manual?1:0)!=saved_hotspot_mode);
         cJSON *profiles=cJSON_AddArrayToObject(wifi,"profiles");
         for(unsigned i=0;profiles&&i<PROFILE_COUNT;i++)if(config.profiles[i].ssid[0]){cJSON *item=cJSON_CreateObject();if(!item)continue;cJSON_AddNumberToObject(item,"id",i);cJSON_AddStringToObject(item,"ssid",config.profiles[i].ssid);cJSON_AddBoolToObject(item,"secure",config.profiles[i].password[0]!=0);cJSON_AddItemToArray(profiles,item);}
 

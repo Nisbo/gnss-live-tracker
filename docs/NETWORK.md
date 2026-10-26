@@ -6,13 +6,15 @@ between them.
 
 ## Hotspot
 
-- **Automatic** is the startup default. With saved profiles, fallback starts after
+- **Automatic** is the initial default. With saved profiles, fallback starts after
   60 seconds without a Wi-Fi IP address. With no saved profiles it starts at once.
   It turns off after one minute of stable home Wi-Fi connectivity.
 - **On** keeps the hotspot active alongside the home connection.
 - **Off** suppresses automatic fallback. Saved Wi-Fi networks are still retried.
 
-The mode applies until restart. Holding USER for three seconds always selects On.
+The selected mode is saved across restarts. Holding USER for three seconds temporarily
+enables the hotspot, including when the saved mode is Off. The saved selection
+returns after restart; selecting a mode in the web interface saves that selection.
 Turning off the hotspot disconnects hotspot clients, while an existing home
 connection remains active.
 
@@ -25,8 +27,9 @@ when it is off. Changing an active hotspot's SSID or password can disconnect cli
 
 Checks and LoRaWAN reporting are off by default. A manual check is available in the
 Wi-Fi tab. Automatic checks normally run every five minutes. After a result changes,
-follow-up checks run ten seconds apart: three failures confirm an outage and two
-successes confirm recovery. The first successful check establishes the initial state.
+a second check runs one minute later. A matching result confirms the change; a
+return to the previous state cancels it. This applies equally to outages and
+recovery. The first check establishes the initial state.
 
 The tracker resolves and requests `http://connectivitycheck.gstatic.com/generate_204`,
 with `http://cp.cloudflare.com/generate_204` as a fallback. Only HTTP 204 counts as
@@ -63,12 +66,14 @@ Optional change reports use FPort 12 and eight bytes: format (1), stable state
 report UTC as a big-endian 32-bit value (0 if unknown), and a saturated failure
 count. UTC is report time, not the start of an outage. The initial state sets a
 baseline without sending a change alert. Pending reports always use the latest
-stable state. Recovery before an outage report is sent cancels it. A successful
-position transmission carrying the status also satisfies that pending report.
+stable state. Recovery before an outage report is sent cancels it. Change reports are available only when position sending is switched off.
 
-Positions have priority. Extra reports wait for radio availability and regional
-limits; separate attempts are at least five minutes apart. They consume additional
-airtime beyond the position-only estimate. Local send success is not proof of TTN
+Use the LoRaWAN tab to enable or disable position sending. GNSS measurements and
+recording continue independently. With position sending enabled, Internet status
+can accompany normal reports; no separate Internet change reports are sent. With
+position sending disabled, outage and recovery reports can be enabled instead.
+They wait for radio availability and regional limits; attempts are at least five
+minutes apart. Local send success is not proof of TTN
 reception. Install the current shared TTN decoder to decode FPort 12.
 
 The tracker does not need Internet access to send LoRaWAN. Its gateway does need a
