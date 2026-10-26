@@ -1,5 +1,10 @@
 # GNSS Live Tracker changelog
 
+## 0.30.5
+
+- Edit saved Wi-Fi profiles within their cards, with masked, prefilled passwords and show/hide controls. Clearing a password saves an open network; unchanged passwords are preserved.
+- Offer Reconnect for the active profile and confirm connection interruptions. Adding profiles remains a separate form.
+
 ## 0.30.4
 
 - Require a fresh OTAA join for sessions without trustworthy receive-window parameters, including older version-1 context records. This prevents restored sessions from using the default 1/2-second windows when the network expects 5/6 seconds. Wi-Fi settings and recordings are retained.

@@ -1,6 +1,22 @@
 /* Inline status and Wi-Fi UI translations. */
 TrackerI18n.register('inline',{
   "de": {
+    "reconnect": "Neu verbinden",
+    "cancel": "Abbrechen",
+    "loading_password": "Passwort wird geladen …",
+    "edit_profile_named": "WLAN-Profil „{ssid}“ bearbeiten",
+    "ssid_label": "WLAN-Name (SSID)",
+    "wifi_password": "WLAN-Passwort",
+    "empty_password_open": "Ohne Passwort wird ein offenes WLAN gespeichert.",
+    "save_profile": "Profil speichern",
+    "save_active_title": "Aktives WLAN-Profil ändern?",
+    "save_active_warning": "Die geänderten Zugangsdaten werden gespeichert und die WLAN-Verbindung wird neu aufgebaut. Die Webansicht kann vorübergehend nicht erreichbar sein. Ohne WLAN-IP öffnet der Tracker nach 60 Sekunden seinen Hotspot.",
+    "save_reconnect": "Speichern und neu verbinden",
+    "reconnect_title": "WLAN neu verbinden?",
+    "switch_title": "WLAN wechseln?",
+    "connection_warning": "Die aktuelle WLAN-Verbindung wird unterbrochen. Die Webansicht kann vorübergehend nicht erreichbar sein. Ohne WLAN-IP öffnet der Tracker nach 60 Sekunden seinen Hotspot.",
+    "profile_exists": "Für diese SSID gibt es bereits ein Profil. Bitte bearbeite es in der Profilkarte.",
+
     "reported": "Aktuell gemeldet (GSV)",
     "fix_only": "Aktuell nur in Fix-Liste",
     "last_seen": "Zuletzt vor {seconds} s",
@@ -92,6 +108,22 @@ TrackerI18n.register('inline',{
     "scan_unavailable": "Suche derzeit nicht möglich. Du kannst erneut suchen oder die SSID direkt eingeben."
   },
   "en": {
+    "reconnect": "Reconnect",
+    "cancel": "Cancel",
+    "loading_password": "Loading password …",
+    "edit_profile_named": "Edit Wi-Fi profile “{ssid}”",
+    "ssid_label": "Wi-Fi name (SSID)",
+    "wifi_password": "Wi-Fi password",
+    "empty_password_open": "Without a password, the network is saved as open.",
+    "save_profile": "Save profile",
+    "save_active_title": "Change the active Wi-Fi profile?",
+    "save_active_warning": "The changed credentials will be saved and Wi-Fi will reconnect. The web interface may be temporarily unavailable. Without a Wi-Fi IP address, the tracker opens its hotspot after 60 seconds.",
+    "save_reconnect": "Save and reconnect",
+    "reconnect_title": "Reconnect Wi-Fi?",
+    "switch_title": "Switch Wi-Fi?",
+    "connection_warning": "The current Wi-Fi connection will be interrupted. The web interface may be temporarily unavailable. Without a Wi-Fi IP address, the tracker opens its hotspot after 60 seconds.",
+    "profile_exists": "A profile for this SSID already exists. Edit it in its profile card.",
+
     "reported": "Currently reported (GSV)",
     "fix_only": "Currently only in fix list",
     "last_seen": "Last seen {seconds} s ago",

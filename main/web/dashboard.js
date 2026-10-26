@@ -10,9 +10,9 @@ const TrackerDashboard=(()=>{
  let mapActive=false,center=null,zoom=16,tiles=new Map(),mapFrame=0,drag=null;
  const enabled=new Set(systems);
  const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
- function confirmAction(title,message,accept=tr("delete")){
+ function confirmAction(title,message,accept=tr("delete"),danger=true){
   const dialog=$('confirm-dialog');if(dialog.open)return Promise.resolve(false);
-  $('confirm-title').textContent=title;$('confirm-message').textContent=message;$('confirm-accept').textContent=accept;dialog.returnValue='cancel';
+  $('confirm-title').textContent=title;$('confirm-message').textContent=message;$('confirm-accept').textContent=accept;$('confirm-accept').className=danger?'danger':'';dialog.returnValue='cancel';
   return new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='accept'),{once:true});dialog.showModal();});
  }
  function historyNotes(){TrackerRecords.renderNotes();storageStats(rawLatest?.track||{});storageStats(rawLatest?.sat_history||{},'history-');}

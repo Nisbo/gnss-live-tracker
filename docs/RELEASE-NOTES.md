@@ -1,4 +1,6 @@
-# GNSS Live Tracker 0.30.4 · release candidate
+# GNSS Live Tracker 0.30.5 · release candidate
+
+Version 0.30.5 adds inline Wi-Fi profile editing, explicit reconnect confirmation and masked password editing. An empty password saves an open network. OTA installation, settings/recording retention and editing/cancel/reconnect-warning behavior have been checked on the EU868 tracker; credential changes and connection interruptions are covered by simulated UI tests.
 
 Version 0.30.4 fixes receive-window restoration. Upgrading an older saved LoRaWAN session triggers a fresh OTAA join once, so receive timing is negotiated again. This requires network coverage; Wi-Fi configuration and recorded tracks/history are retained. Active RX timing is visible in the LoRaWAN and Diagnostics tabs.
 
@@ -10,7 +12,7 @@ Version 0.30.4 fixes receive-window restoration. Upgrading an older saved LoRaWA
 - Beginner setup instructions in English and German; upstream provenance documented without distributing obsolete manuals.
 - Project provenance and applicable component license notices retained and extended.
 
-Firmware behavior and persisted data formats remain as in 0.30.1. The internal OTA project identifier is retained.
+Wi-Fi settings and recording formats remain compatible with 0.30.1. The receive-context migration introduced in 0.30.4 affects only the LoRaWAN session. The internal OTA project identifier is retained.
 
 ## Support and validation
 
