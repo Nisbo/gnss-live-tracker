@@ -191,17 +191,21 @@ static size_t lorawan_region_mask_len(LoRaMacRegion_t region)
 
 /* Additional context keeps dynamic CFList/NewChannelReq channels and negotiated
    dwell/RX1/repetition parameters across a reboot without changing legacy blobs. */
+/* Version 2 requires complete, negotiated receive parameters. Version 1 may
+   contain default RX delays inherited from a legacy session restore. */
+#define LORAWAN_RX_CONTEXT_VERSION 2
+
 typedef struct {uint32_t version,plan;LoRaMacRegionalState_t state;uint8_t count,reserved[3];ChannelParams_t channels[16];uint32_t crc;} regional_context_t;
 static void regional_capture(regional_context_t *c){
- memset(c,0,sizeof(*c));c->version=1;c->plan=lorawan_network_plan();LoRaMacGetRegionalState(&c->state);
+ memset(c,0,sizeof(*c));c->version=LORAWAN_RX_CONTEXT_VERSION;c->plan=lorawan_network_plan();LoRaMacGetRegionalState(&c->state);
  if(s_region!=LORAMAC_REGION_US915&&s_region!=LORAMAC_REGION_AU915){GetPhyParams_t get={.Attribute=PHY_CHANNELS};c->count=16;memcpy(c->channels,RegionGetPhyParam(s_region,&get).Channels,sizeof(c->channels));}
  c->crc=esp_rom_crc32_le(0,(const uint8_t *)c,offsetof(regional_context_t,crc));
 }
 static bool regional_restore(void){
  regional_context_t c;nvs_handle_t h;size_t n=sizeof(c);if(nvs_open(LORAWAN_SESSION_NVS_NS,NVS_READONLY,&h)!=ESP_OK)return false;
  esp_err_t e=nvs_get_blob(h,"context",&c,&n);nvs_close(h);
- if(e==ESP_ERR_NVS_NOT_FOUND)return s_region==LORAMAC_REGION_EU868||s_region==LORAMAC_REGION_US915;
- if(e!=ESP_OK||n!=sizeof(c)||c.version!=1||c.plan!=lorawan_network_plan()||c.crc!=esp_rom_crc32_le(0,(const uint8_t *)&c,offsetof(regional_context_t,crc))||c.count!=(tracker_region_fsb(lorawan_port_region_id(s_region))?0:16))return false;
+ if(e==ESP_ERR_NVS_NOT_FOUND)return false;
+ if(e!=ESP_OK||n!=sizeof(c)||c.version!=LORAWAN_RX_CONTEXT_VERSION||c.plan!=lorawan_network_plan()||c.crc!=esp_rom_crc32_le(0,(const uint8_t *)&c,offsetof(regional_context_t,crc))||c.count!=(tracker_region_fsb(lorawan_port_region_id(s_region))?0:16))return false;
  unsigned id=lorawan_port_region_id(s_region);
  for(unsigned i=0;i<c.count;i++){ChannelParams_t *p=&c.channels[i];if(p->Frequency&&(!tracker_region_frequency(id,p->Frequency)||(p->Rx1Frequency&&!tracker_region_frequency(id,p->Rx1Frequency))||p->DrRange.Fields.Min>p->DrRange.Fields.Max||p->DrRange.Fields.Max>(id==4?5:7)))return false;}
  if(!LoRaMacRestoreRegionalState(&c.state))return false;

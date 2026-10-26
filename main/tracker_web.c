@@ -473,6 +473,14 @@ void tracker_web_publish(const tracker_gnss_t *g,int64_t now,bool joined) {
         uint8_t sf=0;uint16_t bw=0;bool fsk=false;
         lorawan_port_get_dr_params(dr,&sf,&bw,&fsk);cJSON_AddNumberToObject(lora,"dr",dr);cJSON_AddNumberToObject(lora,"sf",sf);cJSON_AddNumberToObject(lora,"bandwidth_khz",bw);
         int8_t current_power;uint32_t adr_ack;LoRaMacGetAdrState(&current_power,&adr_ack);cJSON_AddNumberToObject(lora,"current_power_dbm",current_power);cJSON_AddNumberToObject(lora,"adr_ack_count",adr_ack);
+        LoRaMacRegionalState_t receive;LoRaMacGetRegionalState(&receive);
+        cJSON *rx=cJSON_AddObjectToObject(lora,"rx_windows");if(rx){
+            cJSON_AddNumberToObject(rx,"rx1_delay_ms",receive.receive_delay1);
+            cJSON_AddNumberToObject(rx,"rx2_delay_ms",receive.receive_delay2);
+            cJSON_AddNumberToObject(rx,"rx1_dr_offset",receive.rx1_offset);
+            MibRequestConfirm_t rx2={.Type=MIB_RX2_CHANNEL};
+            if(LoRaMacMibGetRequestConfirm(&rx2)==LORAMAC_STATUS_OK){cJSON_AddNumberToObject(rx,"rx2_frequency_hz",rx2.Param.Rx2Channel.Frequency);cJSON_AddNumberToObject(rx,"rx2_dr",rx2.Param.Rx2Channel.Datarate);}
+        }
         sx1262_tx_power_t power;if(sx1262_get_last_tx_power(&power)){cJSON *tx=cJSON_AddObjectToObject(lora,"tx_power");if(tx){cJSON_AddNumberToObject(tx,"target_dbm",power.target_dbm);cJSON_AddNumberToObject(tx,"target_mw",pow(10.0,power.target_dbm/10.0));cJSON_AddNumberToObject(tx,"requested_dbm",power.requested_dbm);cJSON_AddNumberToObject(tx,"sx1262_drive_dbm",power.drive_dbm);cJSON_AddBoolToObject(tx,"measured",false);}}
         MibRequestConfirm_t mib={.Type=MIB_DEV_ADDR};if(LoRaMacMibGetRequestConfirm(&mib)==LORAMAC_STATUS_OK){char address[9];snprintf(address,sizeof(address),"%08lX",(unsigned long)mib.Param.DevAddr);cJSON_AddStringToObject(lora,"dev_addr",address);}
         lorawan_uplink_info_t up;if(lorawan_port_get_last_uplink(&up)&&up.valid) {

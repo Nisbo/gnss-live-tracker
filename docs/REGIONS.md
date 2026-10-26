@@ -127,7 +127,8 @@ RX1, join-rate selection, all AU FSBs, ADR minimum/channel recovery, AS frequenc
 bounds and LBT free/busy decisions. The production size-query/validation routines
 are exercised with US915, AU915 and AS923 compact budgets. Production session
 capture/restore routines run against simulated NVS and the real regional channel
-handlers, including CRC/plan rejection and legacy EU868/US915 compatibility.
+handlers, including CRC/plan/version rejection, negotiated RX timing and
+mandatory rejoin when legacy receive context is missing.
 HTTP/NVS tests cover configuration migration, invalid combinations, deferred
 restarts, nonce retention and all new region selections. Browser/decoder and
 backup regression checks are also included.

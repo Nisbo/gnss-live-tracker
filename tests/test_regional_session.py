@@ -25,6 +25,7 @@ LoRaMacStatus_t LoRaMacChannelAdd(uint8_t id,ChannelParams_t p){ChannelAddParams
 '''
 for signature in ['void LoRaMacSetInitialDwell(uint8_t uplink)','void LoRaMacGetRegionalState(LoRaMacRegionalState_t *s)','bool LoRaMacRestoreRegionalState(const LoRaMacRegionalState_t *s)']:header+=function(core,signature)
 for signature in ['LoRaMacRegion_t lorawan_port_region(unsigned r)','int lorawan_port_region_id(LoRaMacRegion_t region)','static uint32_t lorawan_network_plan(void)']:header+=function(port,signature)
+header+='#define LORAWAN_RX_CONTEXT_VERSION 2\n'
 a=port.index('typedef struct {uint32_t version,plan;');b=port.index(' regional_context_t;',a)+len(' regional_context_t;');header+=port[a:b]+'\n'
 header+='''static regional_context_t stored;static bool present;
 esp_err_t nvs_open(const char *name,int mode,int *h){assert(!strcmp(name,"lorawan"));(void)mode;*h=0;return ESP_OK;}
@@ -37,19 +38,24 @@ int main(void){
  for(unsigned id=0;id<TRACKER_REGION_COUNT;id++){
   s_region=LoRaMacRegion=lorawan_port_region(id);s_as_group=tracker_region_as923(id)?id-4:1;s_channel_block=tracker_region_fsb(id)?2:0;s_initial_dwell=tracker_region_dwell(id);assert(lorawan_port_region_id(s_region)==(int)id);
   if(tracker_region_as923(id))assert(RegionAS923SetGroup(s_as_group));RegionInitDefaults(s_region,INIT_TYPE_INIT);
-  LoRaMacParams=(LoRaMacParams_t){.UplinkDwellTime=s_initial_dwell,.Rx1DrOffset=0,.ChannelsNbRep=1,.MaxEirp=16,.AntennaGain=2.15,.ReceiveDelay1=3000,.ReceiveDelay2=4000};
+  LoRaMacParams=(LoRaMacParams_t){.UplinkDwellTime=s_initial_dwell,.Rx1DrOffset=0,.ChannelsNbRep=1,.MaxEirp=16,.AntennaGain=2.15,.ReceiveDelay1=5000,.ReceiveDelay2=6000};
   GetPhyParams_t get={.Attribute=PHY_CHANNELS};ChannelParams_t *channels=RegionGetPhyParam(s_region,&get).Channels;
   uint32_t extra_frequency=id==0?867100000:channels[0].Frequency+600000;
   if(!tracker_region_fsb(id)){ChannelParams_t extra={.Frequency=extra_frequency,.Rx1Frequency=extra_frequency,.DrRange.Value=0x50};assert(LoRaMacChannelAdd(3,extra)==LORAMAC_STATUS_OK);}
   regional_capture(&stored);present=true;assert(stored.plan==lorawan_network_plan());
-  RegionInitDefaults(s_region,INIT_TYPE_INIT);LoRaMacParams.ReceiveDelay1=1000;LoRaMacParams.UplinkDwellTime=0;assert(regional_restore());assert(LoRaMacParams.ReceiveDelay1==3000&&LoRaMacParams.ReceiveDelay2==4000&&LoRaMacParams.UplinkDwellTime==s_initial_dwell);
+  RegionInitDefaults(s_region,INIT_TYPE_INIT);LoRaMacParams.ReceiveDelay1=1000;LoRaMacParams.UplinkDwellTime=0;assert(regional_restore());assert(LoRaMacParams.ReceiveDelay1==5000&&LoRaMacParams.ReceiveDelay2==6000&&LoRaMacParams.UplinkDwellTime==s_initial_dwell);
   if(!tracker_region_fsb(id)){channels=RegionGetPhyParam(s_region,&get).Channels;assert(channels[3].Frequency==extra_frequency&&channels[3].Rx1Frequency==extra_frequency);}
   stored.plan^=1;checksum();assert(!regional_restore());stored.plan^=1;checksum();stored.crc^=1;assert(!regional_restore());stored.crc^=1;
-  stored.state.receive_delay2=99999;checksum();assert(!regional_restore());stored.state.receive_delay2=4000;
+  stored.state.receive_delay2=99999;checksum();assert(!regional_restore());stored.state.receive_delay2=6000;
   if(stored.count){uint32_t hz=stored.channels[3].Frequency;stored.channels[3].Frequency=433000000;checksum();assert(!regional_restore());stored.channels[3].Frequency=hz;}
-  present=false;assert(regional_restore()==(id==0||id==1));
+  // Context version 1 may have saved defaults after an earlier legacy restore.
+  stored.version=1;checksum();assert(!regional_restore());
+  stored.version=LORAWAN_RX_CONTEXT_VERSION;checksum();assert(regional_restore());
+  // Legacy sessions must rejoin, never silently retain the 1/2-second defaults.
+  present=false;LoRaMacParams.ReceiveDelay1=1000;LoRaMacParams.ReceiveDelay2=2000;assert(!regional_restore());
+  assert(LoRaMacParams.ReceiveDelay1==1000&&LoRaMacParams.ReceiveDelay2==2000);
  }
- puts("Production regional session context: all plans, runtime AS group binding, dynamic channels/RX1 frequencies, dwell/time/power parameters, CRC/plan rejection and EU868/US915 legacy compatibility PASS");
+ puts("Production regional session context: all plans, runtime AS group binding, dynamic channels/RX1 frequencies, dwell/time/power parameters, CRC/plan/version rejection, 5/6-second restore and mandatory rejoin for incomplete legacy sessions PASS");
 }
 '''
 path=Path(tmp('tracker-regional-session.c'));path.write_text(header)

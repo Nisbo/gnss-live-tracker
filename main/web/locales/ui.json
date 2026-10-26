@@ -500,7 +500,8 @@
     "eyebrow_tracker_screen": "BILDSCHIRM AM TRACKER",
     "eyebrow_update_tracker": "TRACKER AKTUALISIEREN",
     "eyebrow_from_phone_computer": "VOM HANDY ODER COMPUTER",
-    "eyebrow_download_link": "DIREKTER DOWNLOAD-LINK"
+    "eyebrow_download_link": "DIREKTER DOWNLOAD-LINK",
+    "diagnostics_receive_windows": "LoRaWAN-Empfangsfenster"
   },
   "en": {
     "div_direkt_vom_tracker_aktualisierung_alle_2_seku": "Direct from the tracker · Updates every 2 seconds",
@@ -1003,6 +1004,7 @@
     "eyebrow_tracker_screen": "TRACKER SCREEN",
     "eyebrow_update_tracker": "UPDATE TRACKER",
     "eyebrow_from_phone_computer": "FROM PHONE OR COMPUTER",
-    "eyebrow_download_link": "DIRECT DOWNLOAD LINK"
+    "eyebrow_download_link": "DIRECT DOWNLOAD LINK",
+    "diagnostics_receive_windows": "LoRaWAN receive windows"
   }
 }

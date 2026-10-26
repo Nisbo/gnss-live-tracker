@@ -35,6 +35,8 @@ TrackerI18n.register("credentials",{
 });
 TrackerI18n.register("adr",{
  "de": {
+  "receive_windows": "Empfang nach jeder Sendung: RX1 nach {rx1} s · RX2 nach {rx2} s, falls in RX1 keine gültige Antwort ankommt.",
+  "receive_windows_unknown": "Empfangszeiten noch nicht verfügbar.",
   "the_tracker_adjusted_the_radio_settings_because": "Tracker hat wegen ausbleibender Downlinks die Funkparameter angepasst.",
   "network_request_rejected": "Netzwerk-Anfrage abgelehnt: ",
   "channel_mask": "Kanalmaske",
@@ -59,6 +61,8 @@ TrackerI18n.register("adr",{
   "transmissions": ", Sendungen "
  },
  "en": {
+  "receive_windows": "Receive after each transmission: RX1 after {rx1} s · RX2 after {rx2} s if RX1 receives no valid response.",
+  "receive_windows_unknown": "Receive timing is not available yet.",
   "the_tracker_adjusted_the_radio_settings_because": "The tracker adjusted the radio settings because no downlinks were received.",
   "network_request_rejected": "Network request rejected: ",
   "channel_mask": "Channel mask",

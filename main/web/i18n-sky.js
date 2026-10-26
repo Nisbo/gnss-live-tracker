@@ -1,6 +1,11 @@
 /* Built-in German and English sky, orbit and satellite labels. */
 TrackerI18n.register("extras",{
   "de": {
+    "rx1_delay": "RX1 · Verzögerung nach Sendeende",
+    "rx2_delay": "RX2 · Verzögerung nach Sendeende",
+    "rx1_offset": "RX1 · Datenraten-Offset",
+    "rx2_frequency": "RX2 · Frequenz",
+    "rx2_rate": "RX2 · Datenrate",
     "signal_missing": "nicht gemeldet",
     "usage_unknown": "GSA-Verwendung unbekannt",
     "used_gsa": "im Fix gelistet (GSA)",
@@ -85,6 +90,11 @@ TrackerI18n.register("extras",{
     "history_note": "Bahnspuren und Signalverlauf: {minutes} min {seconds} s gesammelt · etwa alle 5 Sekunden · nur in dieser offenen Webansicht, höchstens 30 Minuten. Neuladen startet diese beiden Verläufe neu. Fehlende Werte und Empfangspausen bleiben Lücken."
   },
   "en": {
+    "rx1_delay": "RX1 · Delay after transmission",
+    "rx2_delay": "RX2 · Delay after transmission",
+    "rx1_offset": "RX1 · Data rate offset",
+    "rx2_frequency": "RX2 · Frequency",
+    "rx2_rate": "RX2 · Data rate",
     "signal_missing": "not reported",
     "usage_unknown": "GSA usage unknown",
     "used_gsa": "listed in fix (GSA)",

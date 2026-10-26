@@ -1,4 +1,6 @@
-# GNSS Live Tracker 0.30.3 · release candidate
+# GNSS Live Tracker 0.30.4 · release candidate
+
+Version 0.30.4 fixes receive-window restoration. Upgrading an older saved LoRaWAN session triggers a fresh OTAA join once, so receive timing is negotiated again. This requires network coverage; Wi-Fi configuration and recorded tracks/history are retained. Active RX timing is visible in the LoRaWAN and Diagnostics tabs.
 
 ## What this candidate changes
 
@@ -15,7 +17,7 @@ Firmware behavior and persisted data formats remain as in 0.30.1. The internal O
 - Target: Heltec Wireless Tracker V2, ESP32-S3, 8 MiB flash, UC6580, SX1262, 160×80 TFT.
 - Development hardware: board marked Wireless Tracker Rev. 2.0. Other physical V2 revisions have not been independently validated.
 - EU868: practical join/uplink/downlink operation tested during development. Other selectable regions are **experimental**, with host simulations only.
-- OTA, Wi-Fi persistence, GNSS/display, recording and browser operations have been tested on the development tracker. The exact 0.30.3 candidate has not yet undergone physical acceptance testing.
+- OTA, Wi-Fi persistence, GNSS/display, recording and browser operations have been tested on the development tracker. Version 0.30.4 has passed an EU868 OTA upgrade and fresh join, with 5/6-second receive windows and an accepted network ADR downlink. Clean USB installation and complete recording-data restore still await physical validation.
 - **Pending:** clean USB first installation through ESPHome Web; complete first-run setup; restoring actual full recording areas from backup; interruption/recovery checks where safe. Backup export, preflight, simulated-flash restore and settings restore have been tested. No second-device migration has been physically tested.
 - A host or clean-source build is not a radio certification, regional conformance test, or substitute for these hardware checks.
 
