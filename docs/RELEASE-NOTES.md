@@ -1,4 +1,6 @@
-# GNSS Live Tracker 0.30.5 · release candidate
+# GNSS Live Tracker 0.31.1 · release candidate
+
+Version 0.31.1 includes the network features introduced in 0.31.0: temporary Automatic/On/Off hotspot modes, masked hotspot password editing, optional background Internet checks and optional LoRaWAN availability reports. Install the current shared TTN decoder for Internet fields and FPort 12 reports. Checks and reporting are initially disabled. Internet preferences are included in settings backups; older backups remain compatible. The hotspot mode returns to Automatic after restart. EU868 OTA installation, settings/recording retention, both UI languages and a successful manual HTTP check have been verified on the tracker. Outage/recovery transitions and report scheduling have simulated test coverage; no live outage was forced.
 
 Version 0.30.5 adds inline Wi-Fi profile editing, explicit reconnect confirmation and masked password editing. An empty password saves an open network. OTA installation, settings/recording retention and editing/cancel/reconnect-warning behavior have been checked on the EU868 tracker; credential changes and connection interruptions are covered by simulated UI tests.
 

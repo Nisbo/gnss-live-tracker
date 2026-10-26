@@ -2,7 +2,7 @@
 
 Run `python scripts/test-v2.py` from an ESP-IDF v5.4 environment with Node.js and a host C compiler. The suite uses simulated flash, NVS, HTTP and radio interfaces; it does not connect to physical hardware or transmit radio traffic.
 
-Coverage includes GNSS parsing and quality/time handling, ring storage and merges, recent-first chart loading, browser caching, regional MAC/packet budgets, simulated session persistence, credentials, backup validation and simulated restore, display rendering, languages, MQTT policy, web views, decoders and release packaging.
+Coverage includes GNSS parsing and quality/time handling, ring storage and merges, recent-first chart loading, browser caching, regional MAC/packet budgets, simulated session persistence, credentials, backup validation and simulated restore, display rendering, languages, MQTT policy, web views, decoders and release packaging. Network tests cover hotspot fallback suppression, masked password editing, DNS/HTTP probe outcomes and redirects, debounce, stale worker results, report coalescing, cooldown, packet compatibility and endpoint capacity.
 
 Fixtures contain fabricated application state, standard NMEA examples and public satellite-catalogue samples. They are not exported recordings from a deployed tracker. Keys, identifiers and network settings in tests are examples for automated checks.
 

@@ -203,7 +203,7 @@ const TrackerDashboard=(()=>{
  async function openCsv(){if(csvBusy){if(!$('csv-dialog').open)$('csv-dialog').showModal();return;}csvEnd=TrackerRecords.timelineNow()||history.at(-1)?.t||0;csvSource=TrackerRecords.historySource();$('csv-dialog').showModal();csvDescription();await prepareCsv();}
  function exportCsv(){if(csvBusy)return;if(csvSource!==TrackerRecords.historySource()){$('csv-state').textContent=tr("the_data_source_has_changed_please_reopen_the_dialog");return;}const range=$('csv-range').value,rows=csvRows(range,csvEnd,csvSnapshot||TrackerRecords.historyRows(true));if(!rows.length){$('csv-state').textContent=tr("no_samples_in_this_selection");return;}if($('csv-filtered').checked&&!enabled.size){$('csv-state').textContent=tr("enable_at_least_one_satellite_system_or_export_all");return;}download('tracker-diagramm-'+csvSource+'-'+(range==='all'?'gesamt':'zeitraum')+'.csv','text/csv;charset=utf-8',csv(range,$('csv-filtered').checked,csvEnd));$('csv-state').textContent=tr("csv_export_count",{count:rows.length});}
  let lastMessageKey='';
- function messageType(message){if(!message)return '—';const b=message.bytes||[];return message.fport===0?tr("mac_control_data"):message.fport===10?tr("position_status"):message.fport===11?tr("satellite_list")+(b.length>=7?tr("packet")+b[3]+tr("of")+b[4]:''):'FPort '+message.fport;}
+ function messageType(message){if(!message)return '—';const b=message.bytes||[];return message.fport===0?tr("mac_control_data"):message.fport===12?tr('internet_status'):message.fport===10?tr("position_status"):message.fport===11?tr("satellite_list")+(b.length>=7?tr("packet")+b[3]+tr("of")+b[4]:''):'FPort '+message.fport;}
  function renderLastMessage(message){
   const key=TrackerI18n.language()+(message?JSON.stringify(message):'');if(key===lastMessageKey)return;lastMessageKey=key;
   const box=$('lora-payload');box.replaceChildren();$('lora-payload-hex').textContent='—';$('lora-payload-json').textContent='—';$('lora-message-summary').textContent='';
@@ -221,6 +221,10 @@ const TrackerDashboard=(()=>{
    for(const [name,value]of [['Position',data.gnss_fix?data.latitude.toFixed(6)+' / '+data.longitude.toFixed(6):tr("no_valid_position")],[tr("altitude_f0c36"),data.altitude==null?'—':data.altitude+' m'],[tr("satellites_used_in_fix_reported"),(data.satellites_used??'—')+' / '+(data.satellites_visible??'—')],['HDOP',data.hdop??'—'],[tr("speed"),data.speed_kmh==null?'—':data.speed_kmh.toFixed(1)+' km/h'],[tr("gnss_measurement_time_utc"),data.measurement_utc||'—'],[tr("systems_used"),data.systems_used?(data.systems_used.join(', ')||tr("none_reported")):tr("not_included_in_packet")],[tr("position_sequence"),data.sequence??'—']])datum(name,String(value));
    if(data.compact)$('lora-message-summary').textContent+=tr("compact_packet_limited_space_at_the_current_data_rate");
    for(const row of data.system_counts||[])datum(row.system+tr("reported_listed_in_fix"),(row.satellites_visible??'—')+' / '+(row.satellites_used??'—'));
+   if(data.internet_status)datum(tr('internet_status'),tr('internet_'+data.internet_status));
+  }else if(data.message_type==='internet'){
+   $('lora-message-summary').textContent=tr('internet_status')+': '+tr('internet_'+data.internet_status);
+   datum(tr('internet_status'),tr('internet_'+data.internet_status));datum(tr('internet_reported_at'),data.reported_at_utc||'—');
   }else if(data.message_type==='satellites'){
    $('lora-message-summary').textContent=tr("satellite_packet_counts",{count:data.satellites.length,total:data.satellites_total});
    datum(tr("associated_position_sequence"),String(data.position_sequence));
@@ -309,7 +313,7 @@ const TrackerDashboard=(()=>{
   if(lora.credentials&&!lora.credentials.ready){$('lora-next-kind').textContent=lora.credentials.restart_pending?tr("restart_for_new_credentials"):tr("set_up_lorawan");$('lora-next').textContent=lora.credentials.restart_pending?tr("waiting_for_an_ongoing_radio_transmission_to_finish"):tr("enter_deveui_joineui_and_appkey_above");$('lora-queued').textContent='';return;}
   if(lora.settings?.restart_pending){$('lora-next-kind').textContent=tr("network_change");$('lora-next').textContent=tr("waiting_for_restart");return;}
   const phase=lora.radio_phase||'unknown';$('lora-phase').textContent=({deferred:tr("transmission_pause"),channel_check:tr("channel_check"),transaction:tr("transmission_reception"),preparing:tr("preparing_transmission"),ready:tr("ready_to_transmit"),unknown:tr("waiting_for_radio_status")})[phase];
-  const nextPort=timing.next_fport,what=lora.joined?(nextPort===11?tr("satellite_list"):tr("position_status")):tr("network_join"),queuedNext=!!lora.pending_message&&phase!=='transaction';$('lora-next-kind').textContent=queuedNext?messageType(lora.pending_message):what;
+  const nextPort=timing.next_fport,what=lora.joined?(nextPort===12?tr("internet_status"):nextPort===11?tr("satellite_list"):tr("position_status")):tr("network_join"),queuedNext=!!lora.pending_message&&phase!=='transaction';$('lora-next-kind').textContent=queuedNext?messageType(lora.pending_message):what;
   $('lora-queued').textContent=lora.pending_message?(queuedNext?tr("queued_for_transmission"):tr("current_transmission")+messageType(lora.pending_message)+' · ')+stamp(lora.pending_message.queued_uptime_ms):'';
   const due=lora.joined?timing.next_planned_uptime_ms:timing.next_join_uptime_ms;
   if(!Number.isFinite(due)||!Number.isFinite(now)){$('lora-next').textContent=tr("not_scheduled_yet");return;}

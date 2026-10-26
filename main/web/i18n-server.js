@@ -1,6 +1,8 @@
 /* Exact wire-error translations; raw API responses and protocol fields stay unchanged. */
 TrackerI18n.register("server",{
  "de": {
+  "invalid_internet_settings": "Ungültige Einstellungen für die Internetprüfung.",
+  "could_not_save_internet_settings": "Die Einstellungen der Internetprüfung konnten nicht gespeichert werden.",
   "chunk_checksum_mismatch": "Die Prüfsumme des Datenblocks stimmt nicht überein.",
   "chunk_failed_retry_from_saved_progress": "Der Datenblock konnte nicht gespeichert werden. Mit dem gespeicherten Fortschritt fortsetzen.",
   "confirmed_gnss_timed_ordered_statistics_required": "Die Statistikpunkte benötigen bestätigte GNSS-Zeit und müssen zeitlich sortiert sein.",
@@ -73,6 +75,8 @@ TrackerI18n.register("server",{
   "invalid_mqtt_settings": "Die MQTT-Einstellungen sind ungültig."
  },
  "en": {
+  "invalid_internet_settings": "Invalid Internet check settings.",
+  "could_not_save_internet_settings": "Could not save Internet check settings.",
   "chunk_checksum_mismatch": "The data block checksum does not match.",
   "chunk_failed_retry_from_saved_progress": "Could not save the data block. Resume from the saved progress.",
   "confirmed_gnss_timed_ordered_statistics_required": "Statistics samples need confirmed GNSS timestamps and must be sorted by time.",
@@ -215,5 +219,7 @@ TrackerI18n.registerServerErrors({
  "Invalid restore action": "server.invalid_restore_action",
  "Restore interrupted; keep the file and resume": "server.restore_interrupted_keep_the_file_and_resume",
  "Could not save": "server.could_not_save",
+ "Invalid Internet settings": "server.invalid_internet_settings",
+ "Could not save Internet settings": "server.could_not_save_internet_settings",
  "Invalid MQTT settings": "server.invalid_mqtt_settings"
 });

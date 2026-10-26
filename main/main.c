@@ -10,6 +10,7 @@
 #include "gnss_nmea.h"
 #include "tracker_display.h"
 #include "tracker_web.h"
+#include "tracker_internet.h"
 #include "radio_settings.h"
 #include "radio_policy.h"
 #include "tracker_log.h"
@@ -26,6 +27,8 @@ static const char *TAG="v2-test";
 static tracker_gnss_t gnss;
 static bool gnss_uart_ready;
 static int64_t last_uplink_completed_ms;
+static unsigned outgoing_internet=255;
+static bool outgoing_internet_event;
 static void start_gnss(void) {
     tracker_gnss_init(&gnss);
     /* V2 factory example: VGNSS_CTRL = Vext = 3, HIGH enables GNSS. */
@@ -64,7 +67,7 @@ static void poll_gnss(int64_t now_ms) {
     }
 }
 static void joined(bool ok) { if(ok)tracker_radio_joined(); ESP_LOGI(TAG,"OTAA JOIN %s",ok ? "ACCEPTED" : "FAILED"); }
-static void sent(bool ok,uint8_t dr,int16_t rssi) { last_uplink_completed_ms=esp_timer_get_time()/1000;tracker_web_message_complete(ok,last_uplink_completed_ms); ESP_LOGI(TAG,"Uplink completion=%d DR=%u (unconfirmed, check TTN)",ok,dr); }
+static void sent(bool ok,uint8_t dr,int16_t rssi) { last_uplink_completed_ms=esp_timer_get_time()/1000;tracker_web_message_complete(ok,last_uplink_completed_ms);tracker_internet_sent(outgoing_internet,ok,last_uplink_completed_ms,outgoing_internet_event);outgoing_internet=255;outgoing_internet_event=false; ESP_LOGI(TAG,"Uplink completion=%d DR=%u (unconfirmed, check TTN)",ok,dr); }
 void app_main(void) {
     ESP_LOGI(TAG,"Heltec Tracker V2: region-configured / Class A / OTAA; no eFuse writes");
     ESP_ERROR_CHECK(nvs_flash_init());
@@ -137,7 +140,10 @@ void app_main(void) {
         if(credentials_ready && lorawan_port_is_joined() && now>=next_position && packet_bytes && lorawan_port_can_tx(packet_bytes)) {
             uint8_t payload[38];
             size_t length=packet_bytes<=11?tracker_position_small(&gnss,now/1000,sequence,packet_bytes,payload):tracker_position_packet(&gnss,now/1000,sequence,radio.profile,payload);
+            unsigned internet=tracker_internet_position_state();
+            if(internet<=2&&length>=23)internet_position(payload,length,internet);else internet=255;
             if(lorawan_port_send_unconfirmed(10,payload,length)) {
+                outgoing_internet=internet;outgoing_internet_event=false;
                 last_queued_ms=now/1000;last_queued_port=10;tracker_web_message_queued(10,payload,length,last_queued_ms);
                 ESP_LOGI(TAG,"GNSS queued: FPort 10 sequence=%u fix=%d bytes=%u",sequence,fix,(unsigned)length);
                 ESP_LOG_BUFFER_HEX_LEVEL(TAG,payload,length,ESP_LOG_INFO);
@@ -146,9 +152,15 @@ void app_main(void) {
                 last_position_us=now;next_position=tracker_radio_position_due(last_position_us,position_interval,next_position);
             }
         }
+        unsigned event_state=tracker_internet_pending(now/1000);
+        if(credentials_ready&&lorawan_port_is_joined()&&event_state&&now<next_position&&budget>=8&&lorawan_port_can_tx(8)){
+            uint8_t payload[8];uint32_t utc=gnss.utc_confirmed&&gnss.utc_epoch_ms>0&&now/1000-gnss.utc_received_ms<10000?(gnss.utc_epoch_ms+now/1000-gnss.utc_received_ms)/1000:0;
+            tracker_internet_event_payload(payload,event_state,utc);
+            if(lorawan_port_send_unconfirmed(12,payload,sizeof(payload))){outgoing_internet=event_state;outgoing_internet_event=true;last_queued_ms=now/1000;last_queued_port=12;tracker_web_message_queued(12,payload,sizeof(payload),last_queued_ms);}
+        }
         bool display_refresh=tracker_display_refresh_requested();
         if(now>=next_display||display_refresh) {
-            int64_t due=next_position;uint8_t due_port=10;
+            int64_t due=next_position;uint8_t due_port=10;if(tracker_internet_pending(now/1000)&&now<next_position){due=now;due_port=12;}
             tracker_web_lora_timing(last_queued_ms,last_uplink_completed_ms,last_queued_port,due/1000,due_port,next_join/1000);
             tracker_display_lora_timing(last_uplink_completed_ms,due/1000,due_port);
             tracker_web_publish(&gnss,now/1000,lorawan_port_is_joined());

@@ -1,4 +1,4 @@
-// Tracker V2: FPort 10 position/status v1–v7; FPort 11 satellite inventory v1.
+// Tracker V2: FPort 10 position/status v1–v7; FPort 11 inventory; FPort 12 internet status.
 // ES5-compatible: copy this entire file into the TTN uplink formatter.
 function decodeUplink(input) {
   var b = input.bytes || [];
@@ -6,6 +6,11 @@ function decodeUplink(input) {
   function u16(o) { return b[o] * 256 + b[o + 1]; }
   function i32(o) { return (b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3]; }
   function optional(n, scale) { return n === 65535 ? null : n / scale; }
+  if (input.fPort === 12) {
+    if(b.length!==8||b[0]!==1||b[1]>2||(b[2]&254))return {errors:["Invalid Internet status"]};
+    var eventUtc=b[3]*16777216+b[4]*65536+b[5]*256+b[6];
+    return {data:{message_type:"internet",format_version:1,internet_status:["unknown","unavailable","reachable"][b[1]],internet_reachable:b[1]===0?null:b[1]===2,wifi_has_ip:(b[2]&1)!==0,reported_at_utc:eventUtc?new Date(eventUtc*1000).toISOString():null,probe_failures:b[7]}};
+  }
   if (input.fPort === 11) {
     if (b.length < 7 || b[0] !== 1 || b.length !== 7 + b[6] * 4 ||
         b[3] < 1 || b[3] > b[4]) return { errors: ["Invalid satellite inventory"] };
@@ -27,7 +32,7 @@ function decodeUplink(input) {
       satellites_total: b[5], satellites: satellites
     } };
   }
-  if (input.fPort !== 10) return { errors: ["Expected FPort 10 or 11"] };
+  if (input.fPort !== 10) return { errors: ["Expected FPort 10, 11 or 12"] };
   if ((b[0] & 0xF0) === 0x60 || (b[0] & 0xF0) === 0x70) {
     var small = (b[0] & 0xF0) === 0x60, flags = b[0] & 15;
     if (b.length !== (small ? 11 : 9) || (flags & 1)) return {errors:["Invalid compact position"]};
@@ -54,6 +59,8 @@ function decodeUplink(input) {
       speed_kmh: u16(17) === 65535 ? null : u16(17) * 0.036,
       measurement_utc: utc3 ? new Date(utc3 * 1000).toISOString() : null,
       measurement_unix_s: utc3 || null, satellite_list_truncated: (b[1] & 8) !== 0};
+    var internetCode=(b[1]>>6)&3;
+    if(internetCode){data3.internet_status=["unknown","unavailable","reachable"][internetCode-1];data3.internet_reachable=internetCode===1?null:internetCode===3;}
     if(b[0] !== 4){data3.systems_used=used3;data3.systems_usage_known=(b[1]&32)!==0;}
     if(b[0] === 5){
       data3.system_counts=[];

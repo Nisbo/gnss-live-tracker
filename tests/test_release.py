@@ -29,3 +29,11 @@ assert 'https://github.com/jbjardine/HTIT-Tracker-v1.2-forIDF' in readme[:800]
 assert not any(Path(name).name in ['AGENTS.md','PUBLICATION.md'] for name in files)
 assert not any(name.startswith('.githooks/') for name in files)
 print('Release: S3/project validation, exact partition layout, self-contained public source inventory, private-file exclusion and candidate status PASS')
+
+# Every registered endpoint needs a slot; overflowing aborts startup on hardware.
+import re
+web=(ROOT/'main/tracker_web.c').read_text()
+capacity=int(re.search(r'config.max_uri_handlers=(\d+)',web).group(1))
+registered=sum(len(re.findall(r'\.uri\s*=\s*"',p.read_text())) for p in (ROOT/'main').glob('*.c'))
+assert capacity>=registered,(capacity,registered)
+print('HTTP endpoint capacity:',registered,'routes fit in',capacity,'slots')

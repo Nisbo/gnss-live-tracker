@@ -1,6 +1,12 @@
 /* Built-in dashboard and recording translations. Device data and export schema stay language-independent. */
 TrackerI18n.register("dashboard",{
   "de": {
+    "internet_status": "Internetstatus",
+    "internet_unknown": "Noch nicht bestätigt",
+    "internet_unavailable": "Nicht erreichbar",
+    "internet_reachable": "Erreichbar",
+    "internet_reported_at": "Meldezeit · UTC",
+
     "delete": "Löschen",
     "days": " Tage",
     "hours": " Stunden",
@@ -253,6 +259,12 @@ TrackerI18n.register("dashboard",{
     }
   },
   "en": {
+    "internet_status": "Internet status",
+    "internet_unknown": "Not confirmed yet",
+    "internet_unavailable": "Unavailable",
+    "internet_reachable": "Reachable",
+    "internet_reported_at": "Report time · UTC",
+
     "delete": "Delete",
     "days": " days",
     "hours": " hours",

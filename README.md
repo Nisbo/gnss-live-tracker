@@ -8,12 +8,13 @@ Firmware for the **Heltec Wireless Tracker V2 (ESP32-S3, 8 MiB flash)**, based o
 
 **Have a Wireless Tracker V1.2? Use the [original V1.2 project](https://github.com/jbjardine/HTIT-Tracker-v1.2-forIDF). This repository targets the V2.**
 
-Current preview: **0.30.5**. Clean USB installation and complete recording-data restore are still awaiting physical validation; see the [known limitations](docs/RELEASE-NOTES.md).
+Current preview: **0.31.1**. Clean USB installation and complete recording-data restore are still awaiting physical validation; see the [known limitations](docs/RELEASE-NOTES.md).
 
 - [Install and set up · English](docs/INSTALL.en.md)
 - [Installieren und einrichten · Deutsch](docs/INSTALL.de.md)
 - [Build and test from source](docs/BUILD.md)
 - [Known limitations and validation status](docs/RELEASE-NOTES.md)
+- [Wi-Fi, hotspot modes and Internet reporting](docs/NETWORK.md)
 - [Security and data handling](docs/SECURITY.md)
 - [Project origin, changes and third-party notices](docs/UPSTREAM.md)
 
@@ -22,7 +23,8 @@ Current preview: **0.30.5**. Clean USB installation and complete recording-data 
 - Real GNSS positions, fix status, satellite systems, signal levels and a sky view.
 - Position tracks and satellite-count history recorded on the tracker independently of the browser; configurable recording destinations and intervals.
 - Local web UI in English and German, with charts, map, 3D Earth and satellite ground tracks.
-- Eight Wi-Fi profiles, automatic reconnection, Wi-Fi scanning and a configurable setup hotspot.
+- Eight Wi-Fi profiles, automatic reconnection, Wi-Fi scanning and Automatic/On/Off hotspot modes.
+- Optional background Internet checks and LoRaWAN availability reports.
 - LoRaWAN Class A / OTAA, selectable regional plans, data rates, ADR, packet profiles and position interval; shared TTN decoder.
 - MQTT telemetry and Home Assistant discovery, with optional credentials and configurable port.
 - Configurable display pages, rotation, clock, timeout and USER-button controls.

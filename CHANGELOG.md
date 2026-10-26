@@ -1,5 +1,15 @@
 # GNSS Live Tracker changelog
 
+## 0.31.1
+
+- Remove a stale manual-check progress message; the live Internet badge and check details show the actual result.
+
+## 0.31.0
+
+- Add Automatic/On/Off hotspot modes until restart, with USER activation and masked password editing. Remove the redundant new-profile reset button.
+- Add optional background Internet checks and optional LoRaWAN availability reports. Three failed checks confirm an outage, two successful checks confirm recovery. Standard position packets reuse two flag bits without growing; optional eight-byte FPort 12 reports respect radio scheduling and replace outdated pending status.
+- Keep Internet checks and reporting disabled by default. Extend the shared TTN decoder and settings backup for the new options.
+
 ## 0.30.5
 
 - Edit saved Wi-Fi profiles within their cards, with masked, prefilled passwords and show/hide controls. Clearing a password saves an open network; unchanged passwords are preserved.

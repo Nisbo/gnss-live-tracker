@@ -44,6 +44,7 @@ try:
     compile_run('sat_import',[tests+'test_sat_import.c',main+'sat_import.c',cj])
     for name in ['credentials_policy','radio_policy','wifi_policy','mqtt_policy','backup_policy','display_policy']:
         compile_run(name,[tests+'test_'+name+'.c',main+'tracker_timezones.c',cj])
+    compile_run('internet',[tests+'test_internet.c',cj],['-I'+tests+'internet_stubs','-I'+tests+'backup_stubs'])
     compile_run('adr_history',[tests+'test_adr_history.c','components/loramac/adr_history.c'],['-I'+tests+'backup_stubs'])
     compile_run('status_cache',[tests+'test_status_cache.c',main+'status_cache.c',main+'gnss_nmea.c'],['-pthread'],tmp('tracker-v100-status.json'))
     compile_run('display_server',[tests+'test_display_server.c',main+'gnss_nmea.c',main+'tracker_timezones.c',cj],['-Wno-sign-compare','-I'+tests+'display_stubs','-I'+tests+'backup_stubs','-I'+tests+'region_stubs'])

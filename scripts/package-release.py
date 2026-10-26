@@ -77,7 +77,7 @@ def main():
         if not notice or 'Copyright' not in notice.group(1):
             raise ValueError('Crypto source notice missing')
         (dest/'licenses'/(name+'.NOTICE.txt')).write_text(notice.group(1)+'\n')
-    for doc in ['BUILD.md','QUICKSTART.md','TESTS.md','TROUBLESHOOTING.md']:
+    for doc in ['BUILD.md','QUICKSTART.md','TESTS.md','TROUBLESHOOTING.md','NETWORK.md']:
         shutil.copyfile(ROOT/'docs'/doc,dest/'docs'/doc)
     description = json.loads((build/'project_description.json').read_text())
     idf = Path(description['idf_path']).resolve()

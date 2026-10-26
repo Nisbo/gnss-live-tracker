@@ -7,6 +7,7 @@
 #include "radio_policy.h"
 #include "tracker_mqtt.h"
 #include "tracker_web.h"
+#include "internet_policy.h"
 #include "nvs.h"
 #include "esp_partition.h"
 #include "esp_timer.h"
@@ -22,7 +23,7 @@
 /* These are user settings only. MAC sessions/counters and arbitrary NVS are excluded. */
 typedef struct {const char *group,*ns,*key;nvs_type_t type;unsigned max;} setting_t;
 static const setting_t specs[]={
- {"wifi","tracker_web","profiles_v1",NVS_TYPE_BLOB,880},{"wifi","tracker_web","ssid",NVS_TYPE_STR,33},{"wifi","tracker_web","password",NVS_TYPE_STR,64},
+ {"wifi","tracker_net","config_v1",NVS_TYPE_BLOB,4},{"wifi","tracker_web","profiles_v1",NVS_TYPE_BLOB,880},{"wifi","tracker_web","ssid",NVS_TYPE_STR,33},{"wifi","tracker_web","password",NVS_TYPE_STR,64},
  {"lora","tracker_otaa","config_v1",NVS_TYPE_BLOB,36},
  {"radio","tracker_radio","config_v5",NVS_TYPE_BLOB,12},{"radio","tracker_radio","config_v4",NVS_TYPE_BLOB,10},{"radio","tracker_radio","config_v3",NVS_TYPE_BLOB,6},{"radio","tracker_radio","config_v2",NVS_TYPE_BLOB,6},{"radio","tracker_radio","config_v1",NVS_TYPE_BLOB,4},
  {"mqtt","tracker_mqtt","config",NVS_TYPE_BLOB,1024},
@@ -53,6 +54,7 @@ static bool setting_valid(unsigned index,const uint8_t *b,size_t n){const settin
  if(s->type==NVS_TYPE_U32){uint32_t v=0;if(n!=4)return false;memcpy(&v,b,4);return v>=5&&v<=3600;}
  if(s->type==NVS_TYPE_STR)return b[n-1]==0&&!memchr(b,0,n-1);
  if(!same(s->group,"mqtt")&&n!=s->max)return false;
+ if(same(s->ns,"tracker_net")){internet_config_t c;memcpy(&c,b,sizeof(c));return internet_config_valid(c);}
  if(same(s->group,"wifi"))return tracker_web_backup_valid(b,n);
  if(same(s->group,"mqtt"))return tracker_mqtt_backup_valid(b,n);
  if(same(s->group,"lora"))return n==36&&b[0]==1&&b[1]==0;

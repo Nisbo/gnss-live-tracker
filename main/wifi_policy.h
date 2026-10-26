@@ -16,3 +16,12 @@ static inline int tracker_wifi_choose(const tracker_wifi_candidate_t *c,size_t c
 static inline bool tracker_wifi_fallback_due(bool connected,bool hotspot,int64_t outage,int64_t now) {
     return !connected&&!hotspot&&outage>0&&now-outage>=60000;
 }
+
+/* Modes are temporary: Automatic=0, manually On=1, manually Off=2. */
+static inline bool tracker_wifi_hotspot_on(unsigned mode,bool configured,bool connected,bool active,int64_t connected_ms,int64_t outage,int64_t now){
+ if(mode==2)return false;
+ if(mode==1)return true;
+ if(!configured)return true;
+ if(connected)return active&&now-connected_ms<60000;
+ return active||tracker_wifi_fallback_due(false,false,outage,now);
+}

@@ -15,5 +15,13 @@ int main(void) {
     assert(!tracker_wifi_fallback_due(false,true,100,70000));
     /* No-IP association uses the same timeout as an unavailable SSID. */
     assert(tracker_wifi_fallback_due(false,false,100,70000));
+    assert(!tracker_wifi_hotspot_on(2,true,false,true,0,100,70000));
+    assert(!tracker_wifi_hotspot_on(2,false,false,false,0,100,70000));
+    assert(tracker_wifi_hotspot_on(1,true,true,false,0,0,70000));
+    assert(tracker_wifi_hotspot_on(0,false,false,false,0,100,100));
+    assert(!tracker_wifi_hotspot_on(0,true,false,false,0,100,60099));
+    assert(tracker_wifi_hotspot_on(0,true,false,false,0,100,60100));
+    assert(tracker_wifi_hotspot_on(0,true,true,true,100,0,60099));
+    assert(!tracker_wifi_hotspot_on(0,true,true,true,100,0,60100));
     puts("WLAN policy: strongest profile, failover, cooldown, lock and 60-second no-IP timeout passed");
 }
