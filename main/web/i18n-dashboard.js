@@ -5,13 +5,11 @@ TrackerI18n.register("dashboard",{
     "positions_off_airtime": "Keine Sendezeit für Positionsmeldungen.",
     "waiting_internet_change": "Wartet auf einen bestätigten Internet-Statuswechsel",
     "no_position_schedule": "Keine Positionsmeldung geplant",
-
     "internet_status": "Internetstatus",
     "internet_unknown": "Noch nicht bestätigt",
     "internet_unavailable": "Nicht erreichbar",
     "internet_reachable": "Erreichbar",
     "internet_reported_at": "Meldezeit · UTC",
-
     "delete": "Löschen",
     "days": " Tage",
     "hours": " Stunden",
@@ -34,9 +32,6 @@ TrackerI18n.register("dashboard",{
     "starting": "Startet …",
     "no_status_yet": "Noch kein Status",
     "last_connection_error": " · Letzter Verbindungsfehler: ",
-    "an_mqtt_password_is_stored_leave_blank_to_keep": "Ein MQTT-Passwort ist gespeichert. Leer lassen behält es bei.",
-    "no_mqtt_password_stored": "Kein MQTT-Passwort gespeichert.",
-    "settings_rejected": "Einstellungen abgelehnt (",
     "saved_mqtt_applies_the_settings_in_the_background": "Gespeichert. Der MQTT-Dienst übernimmt die Einstellungen im Hintergrund.",
     "could_not_save": "Speichern fehlgeschlagen: ",
     "listed_in_fix": "Im Fix gelistet",
@@ -261,20 +256,37 @@ TrackerI18n.register("dashboard",{
     "csv_export_count": {
       "one": "{count} Messpunkt exportiert. Gespeicherte Daten bleiben erhalten.",
       "other": "{count} Messpunkte exportiert. Gespeicherte Daten bleiben erhalten."
-    }
+    },
+    "mqtt_show_password": "Passwort anzeigen",
+    "mqtt_hide_password": "Verbergen",
+    "mqtt_loading_password": "Gespeichertes Passwort wird geladen …",
+    "mqtt_password_load_failed": "Das gespeicherte Passwort konnte nicht geladen werden. Bitte erneut versuchen.",
+    "mqtt_empty_password": "Ein leeres Feld speichert MQTT ohne Passwort.",
+    "mqtt_topic_state": "Status und Satelliten",
+    "mqtt_topic_position": "Gültige Position",
+    "mqtt_topic_availability": "Online / offline",
+    "mqtt_topic_command": "Fernbefehle empfangen",
+    "mqtt_topic_result": "Befehlsergebnis",
+    "mqtt_direction_out": "Tracker → Broker",
+    "mqtt_direction_in": "Broker → Tracker",
+    "mqtt_commands_disabled": "Fernbefehle ausgeschaltet",
+    "mqtt_ha_fix": "GNSS-Fix",
+    "mqtt_ha_satellites": "Satelliten im Fix",
+    "mqtt_ha_wifi": "WLAN-Signal",
+    "mqtt_ha_uptime": "Laufzeit",
+    "mqtt_ha_lora": "LoRaWAN-Sitzung",
+    "mqtt_ha_birth": "Home-Assistant-Startmeldung"
   },
   "en": {
     "positions_off": "Position sending is off",
     "positions_off_airtime": "No airtime for position reports.",
     "waiting_internet_change": "Waiting for a confirmed Internet status change",
     "no_position_schedule": "No position report scheduled",
-
     "internet_status": "Internet status",
     "internet_unknown": "Not confirmed yet",
     "internet_unavailable": "Unavailable",
     "internet_reachable": "Reachable",
     "internet_reported_at": "Report time · UTC",
-
     "delete": "Delete",
     "days": " days",
     "hours": " hours",
@@ -297,9 +309,6 @@ TrackerI18n.register("dashboard",{
     "starting": "Starting …",
     "no_status_yet": "No status yet",
     "last_connection_error": " · Last connection error: ",
-    "an_mqtt_password_is_stored_leave_blank_to_keep": "An MQTT password is stored. Leave blank to keep it.",
-    "no_mqtt_password_stored": "No MQTT password stored.",
-    "settings_rejected": "Settings rejected (",
     "saved_mqtt_applies_the_settings_in_the_background": "Saved. MQTT applies the settings in the background.",
     "could_not_save": "Could not save: ",
     "listed_in_fix": "Listed in fix",
@@ -524,7 +533,26 @@ TrackerI18n.register("dashboard",{
     "csv_export_count": {
       "one": "{count} sample exported. Stored data is preserved.",
       "other": "{count} samples exported. Stored data is preserved."
-    }
+    },
+    "mqtt_show_password": "Show password",
+    "mqtt_hide_password": "Hide",
+    "mqtt_loading_password": "Loading saved password …",
+    "mqtt_password_load_failed": "Could not load the saved password. Please try again.",
+    "mqtt_empty_password": "An empty field saves MQTT without a password.",
+    "mqtt_topic_state": "Status and satellites",
+    "mqtt_topic_position": "Valid position",
+    "mqtt_topic_availability": "Online / offline",
+    "mqtt_topic_command": "Receive commands",
+    "mqtt_topic_result": "Command result",
+    "mqtt_direction_out": "Tracker → broker",
+    "mqtt_direction_in": "Broker → tracker",
+    "mqtt_commands_disabled": "Commands are off",
+    "mqtt_ha_fix": "GNSS fix",
+    "mqtt_ha_satellites": "Satellites used",
+    "mqtt_ha_wifi": "Wi-Fi signal",
+    "mqtt_ha_uptime": "Uptime",
+    "mqtt_ha_lora": "LoRaWAN session",
+    "mqtt_ha_birth": "Home Assistant birth message"
   }
 });
 TrackerI18n.register("recording",{

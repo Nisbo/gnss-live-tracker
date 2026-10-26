@@ -4,7 +4,7 @@ const TrackerDashboard=(()=>{
  const tr=(key,params)=>TrackerI18n.t('dashboard.'+key,params);
  const $=id=>document.getElementById(id),systems=['GPS','GLONASS','Galileo','BeiDou','QZSS','SBAS','NavIC'];
  const colors=['#75d8ff','#e9a1ff','#9debc0','#ffe09b','#ff9a7d','#afbcff','#f5a9ca'];
- let mqttLoaded=false;
+ let mqttLoaded=false,mqttActive=false,mqttPasswordLoaded=false,mqttPasswordLoading=false,mqttSaving=false,mqttSecretTimer,mqttTopicsSignature="";
  let selected="Galileo",currentUsed=[];
  let history=[],track=[],latest=null,rawLatest=null,zone='auto',clockReceived=0,clockUtc=null,clockConfirmed=false,clockFresh=false;
  let mapActive=false,center=null,zoom=16,tiles=new Map(),mapFrame=0,drag=null;
@@ -30,19 +30,35 @@ const TrackerDashboard=(()=>{
   const estimate=duration((log.slots_before_overwrite??Math.max(0,capacity-count))*log.interval_s);
   id('overwrite').textContent=!log.ready?'':(log.overwriting?tr("ring_buffer_active_the_oldest_data_is_overwritten_in"):(log.enabled?tr("time_until_the_first_overwrite_approximately")+estimate:tr("recording_paused_remaining_capacity_when_resumed")+estimate)+'.')+(prefix?tr("estimate_at_the_current_interval_including_samples_without_a"):tr("estimate_at_the_current_interval_with_a_valid_fix"));
  }
+ function hideMqttPassword(){clearTimeout(mqttSecretTimer);$('mqtt-password').type='password';$('mqtt-reveal').textContent=tr('mqtt_show_password');$('mqtt-reveal').setAttribute('aria-pressed','false');}
+ async function mqttRequest(data){
+  const response=await fetch('/api/mqtt',{method:'POST',signal:AbortSignal.timeout(10000),headers:{'Content-Type':'application/json','X-Tracker-Token':rawLatest?.request_token||''},body:JSON.stringify(data)});
+  if(!response.ok)throw Error(TrackerI18n.serverMessage(await response.text()));return response.json();
+ }
+ async function loadMqttPassword(){
+  if(mqttPasswordLoaded||mqttPasswordLoading||!rawLatest?.mqtt)return;mqttPasswordLoading=true;$('mqtt-password-note').textContent=tr('mqtt_loading_password');$('mqtt-password-retry').hidden=true;
+  try{const result=rawLatest.mqtt.password_set?await mqttRequest({action:'reveal'}):{password:''};if(typeof result.password!=='string')throw Error(tr('mqtt_password_load_failed'));$('mqtt-password').value=result.password;result.password='';mqttPasswordLoaded=true;$('mqtt-password').disabled=$('mqtt-reveal').disabled=false;$('mqtt-password-note').textContent=tr('mqtt_empty_password');hideMqttPassword();}
+  catch(error){$('mqtt-password-note').textContent=tr('mqtt_password_load_failed');$('mqtt-password-retry').hidden=false;}
+  finally{mqttPasswordLoading=false;$('mqtt-save').disabled=!mqttPasswordLoaded||mqttSaving;}
+ }
+ function renderMqttTopics(){
+  if(!mqttLoaded)return;const base=$('mqtt-topic').value.trim(),discovery=$('mqtt-discovery').checked,commands=$('mqtt-commands').checked,identity=rawLatest?.mqtt?.client_id||'';
+  const signature=JSON.stringify([base,discovery,commands,identity,TrackerI18n.language()]);if(signature===mqttTopicsSignature)return;mqttTopicsSignature=signature;
+  const rows=[['state','mqtt_topic_state','out'],['position','mqtt_topic_position','out'],['availability','mqtt_topic_availability','out'],['command','mqtt_topic_command','in'],['command_result','mqtt_topic_result','out']];
+  function addRow(parent,path,label,direction,note=''){const row=document.createElement('tr'),name=document.createElement('th'),topic=document.createElement('td'),code=document.createElement('code'),info=document.createElement('td');name.scope='row';name.textContent=label;code.textContent=path;topic.append(code);info.textContent=tr('mqtt_direction_'+direction)+(note?' · '+note:'');row.append(name,topic,info);parent.append(row);}
+  const body=$('mqtt-topics');body.replaceChildren();for(const [suffix,label,direction]of rows)addRow(body,base?base+'/'+suffix:'—',tr(label),direction,suffix.startsWith('command')&&!commands?tr('mqtt_commands_disabled'):'');
+  $('mqtt-discovery-topics').hidden=!discovery;const ha=$('mqtt-ha-topics');ha.replaceChildren();if(discovery&&identity){for(const [key,label]of [['fix','mqtt_ha_fix'],['satellites_used','mqtt_ha_satellites'],['wifi_rssi','mqtt_ha_wifi'],['uptime_s','mqtt_ha_uptime'],['lora_joined','mqtt_ha_lora']])addRow(ha,'homeassistant/sensor/'+identity+'/'+key+'/config',tr(label),'out');addRow(ha,'homeassistant/device_tracker/'+identity+'/position/config',tr('mqtt_topic_position'),'out');addRow(ha,'homeassistant/status',tr('mqtt_ha_birth'),'in');}
+ }
  function renderMqtt(raw){
   const m=raw.mqtt||{},labels={disabled:tr("off"),connected:tr("connected"),connecting:tr("connecting_retrying"),starting:tr("starting")};
   $('mqtt-state').textContent=labels[m.state]||tr("no_status_yet");$('mqtt-state').dataset.state=m.state==='connected'?'used':'unknown';
   $('mqtt-detail').textContent=tr("mqtt_counters",{sent:m.sent_messages||0,connections:m.connections||0,commands:m.commands_received||0})+(m.last_error?tr("last_connection_error")+m.last_error:'');
-  $('mqtt-password-note').textContent=m.password_set?tr("an_mqtt_password_is_stored_leave_blank_to_keep"):tr("no_mqtt_password_stored");
-  $('mqtt-topics').textContent=m.topic?m.topic+'/state · '+m.topic+'/position · '+m.topic+'/availability · '+m.topic+'/command · '+m.topic+'/command_result':'';
-  $('mqtt-save').disabled=false;
   if(!mqttLoaded&&m.topic){mqttLoaded=true;for(const [id,key] of [['host','host'],['port','port'],['interval','interval_s'],['topic','topic'],['username','username']])$('mqtt-'+id).value=m[key]??'';for(const key of ['enabled','discovery','commands'])$('mqtt-'+key).checked=!!m[key];}
+  $('mqtt-save').disabled=!mqttPasswordLoaded||mqttSaving;renderMqttTopics();if(mqttActive&&!mqttPasswordLoaded&&!mqttPasswordLoading&&$('mqtt-password-retry').hidden)loadMqttPassword();
  }
  async function saveMqtt(event){
-  event.preventDefault();const data={enabled:$('mqtt-enabled').checked,host:$('mqtt-host').value.trim(),port:Number($('mqtt-port').value),interval_s:Number($('mqtt-interval').value),topic:$('mqtt-topic').value.trim(),username:$('mqtt-username').value,discovery:$('mqtt-discovery').checked,commands:$('mqtt-commands').checked};
-  if($('mqtt-clear-password').checked)data.password='';if($('mqtt-password').value)data.password=$('mqtt-password').value;
-  $('mqtt-save').disabled=true;try{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);let response;try{response=await fetch('/api/mqtt',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json','X-Tracker-Token':rawLatest?.request_token||''},body:JSON.stringify(data)});}finally{clearTimeout(timer);}if(!response.ok)throw new Error(tr("settings_rejected")+response.status+')');$('mqtt-password').value='';$('mqtt-clear-password').checked=false;$('mqtt-note').textContent=tr("saved_mqtt_applies_the_settings_in_the_background");}catch(error){$('mqtt-note').textContent=tr("could_not_save")+error.message;}finally{$('mqtt-save').disabled=false;}
+  event.preventDefault();if(!mqttPasswordLoaded||mqttSaving)return;const data={enabled:$('mqtt-enabled').checked,host:$('mqtt-host').value.trim(),port:Number($('mqtt-port').value),interval_s:Number($('mqtt-interval').value),topic:$('mqtt-topic').value.trim(),username:$('mqtt-username').value,password:$('mqtt-password').value,discovery:$('mqtt-discovery').checked,commands:$('mqtt-commands').checked};
+  mqttSaving=true;$('mqtt-save').disabled=true;try{await mqttRequest(data);hideMqttPassword();$('mqtt-note').textContent=tr("saved_mqtt_applies_the_settings_in_the_background");}catch(error){$('mqtt-note').textContent=tr("could_not_save")+error.message;}finally{data.password='';mqttSaving=false;$('mqtt-save').disabled=false;}
  }
  function syncTrack(force=false){return TrackerRecords.syncTracks(force).then(refresh);}
  function chooseSystem(name){if(!systems.includes(name))return;selected=name;try{localStorage.setItem('tracker-featured-system',name);}catch(error){}renderSystem();if(typeof renderSatellites==='function')renderSatellites();}
@@ -80,7 +96,7 @@ const TrackerDashboard=(()=>{
   * In particular, do not call update()/sync(): device history may contain tens
   * of thousands of points and its incremental cursor must survive unchanged. */
  function languageChanged(){
-  timezoneOptions();renderClock();renderSystem();refresh();renderAccuracy();accuracyCircleNote();
+  hideMqttPassword();if(mqttPasswordLoaded)$('mqtt-password-note').textContent=tr('mqtt_empty_password');timezoneOptions();renderClock();renderSystem();refresh();renderAccuracy();accuracyCircleNote();
   $('load-map').textContent=mapActive?tr("centre_on_current_position"):tr("load_map");
   if(rawLatest){
    renderNetwork(rawLatest.wifi||{});
@@ -325,7 +341,14 @@ const TrackerDashboard=(()=>{
   const seconds=queuedNext?0:Math.max(0,Math.ceil((due-now)/1000));
   $('lora-next').textContent=!lora.joined&&lora.join_pending?tr("joining_the_network"):seconds?tr("scheduled_in")+age(seconds):phase==='deferred'?tr("waiting_for_the_transmission_pause_to_end"):phase==='transaction'?tr("waiting_for_the_current_transmission_to_finish"):phase==='channel_check'?tr("waiting_for_a_clear_radio_channel"):phase==='preparing'?tr("preparing_transmission"):tr("queued_for_transmission_c0f3d");
  }
- function showTab(name){if(name==='track'&&mapActive)scheduleMap();if(name==='live')renderCharts();}
+ function showTab(name){mqttActive=name==='mqtt';if(!mqttActive)hideMqttPassword();else if(rawLatest)renderMqtt(rawLatest);if(name==='track'&&mapActive)scheduleMap();if(name==='live')renderCharts();}
+ function initMqtt(){
+  $('mqtt-form').addEventListener('submit',saveMqtt);$('mqtt-password-retry').hidden=true;
+  $('mqtt-password-retry').addEventListener('click',loadMqttPassword);
+  $('mqtt-reveal').addEventListener('click',()=>{if($('mqtt-password').type==='text'){hideMqttPassword();return;}$('mqtt-password').type='text';$('mqtt-reveal').textContent=tr('mqtt_hide_password');$('mqtt-reveal').setAttribute('aria-pressed','true');mqttSecretTimer=setTimeout(hideMqttPassword,30000);});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)hideMqttPassword();});
+  for(const id of ['mqtt-topic','mqtt-discovery','mqtt-commands'])$(id).addEventListener(id==='mqtt-topic'?'input':'change',renderMqttTopics);
+ }
  function init(){
   try{const selected=localStorage.getItem('tracker-timezone')||'auto';new Intl.DateTimeFormat(TrackerI18n.locale(),{timeZone:selected==='auto'?undefined:selected});zone=selected;}catch(error){}
   try{const name=localStorage.getItem('tracker-featured-system');if(systems.includes(name))selected=name;}catch(error){}
@@ -335,7 +358,7 @@ const TrackerDashboard=(()=>{
   $('radio-dwell').addEventListener('change',()=>{radioOptions(selectedRegion());$('radio-form').dataset.dirty='true';radioEstimate();});
   $('radio-form').addEventListener('submit',saveRadio);$('radio-reset').addEventListener('click',resetRadio);
   for(const id of ['radio-sf','radio-adr','radio-profile','radio-interval','radio-block','radio-position-enabled'])$(id).addEventListener('change',()=>{$('radio-form').dataset.dirty='true';radioEstimate();});
-  $('mqtt-form').addEventListener('submit',saveMqtt);
+  initMqtt();
   timezoneOptions();$('timezone').addEventListener('change',()=>setZone($('timezone').value));$('clock-button').addEventListener('click',()=>{$('time-dialog').showModal();});
   systems.forEach(name=>{const button=document.createElement('button');button.type='button';button.dataset.system=name;button.textContent=name;button.setAttribute('aria-pressed',String(name===selected));button.addEventListener('click',()=>chooseSystem(name));$('system-selector').append(button);});
   $('load-map').addEventListener('click',loadMap);$('hide-map').addEventListener('click',()=>{mapActive=false;tiles.clear();$('position-map').hidden=true;$('hide-map').hidden=true;$('load-map').textContent=tr("load_map");$('map-note').textContent=tr("map_hidden_tracker_recording_continues_independently");});

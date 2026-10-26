@@ -1,6 +1,9 @@
-# GNSS Live Tracker 0.32.1 · release candidate
+# GNSS Live Tracker 0.32.2 · release candidate
 
-Version 0.32.1 saves the hotspot mode across restarts and highlights the active selection. USER can temporarily enable the hotspot without changing the saved mode. Internet changes are confirmed by a second check one minute later; status colors and help text are clearer in German and English. Position sending can be disabled independently of GNSS and recording. Separate Internet alerts are available only with position sending off. Existing Wi-Fi profiles, radio parameters and recording formats are retained. Host tests cover persistence, confirmation timing and mutually exclusive reporting; remote checks cannot replace physical USER-button or forced-outage tests.
+Version 0.32.2 refines MQTT setup: saved passwords load into a masked field, with temporary show/hide controls; an empty field removes the password. Data, command and Home Assistant topics are listed separately. MQTT no longer builds satellite snapshots while disabled. Unused translations and form state have been removed. Configuration and recording formats are unchanged.
+
+
+Version 0.32.2 saves the hotspot mode across restarts and highlights the active selection. USER can temporarily enable the hotspot without changing the saved mode. Internet changes are confirmed by a second check one minute later; status colors and help text are clearer in German and English. Position sending can be disabled independently of GNSS and recording. Separate Internet alerts are available only with position sending off. Existing Wi-Fi profiles, radio parameters and recording formats are retained. Host tests cover persistence, confirmation timing and mutually exclusive reporting; remote checks cannot replace physical USER-button or forced-outage tests.
 
 Version 0.30.5 adds inline Wi-Fi profile editing, explicit reconnect confirmation and masked password editing. An empty password saves an open network. OTA installation, settings/recording retention and editing/cancel/reconnect-warning behavior have been checked on the EU868 tracker; credential changes and connection interruptions are covered by simulated UI tests.
 

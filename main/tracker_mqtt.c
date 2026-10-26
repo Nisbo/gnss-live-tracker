@@ -100,11 +100,12 @@ bool tracker_mqtt_init(void){
  lock=xSemaphoreCreateMutex();samples=xQueueCreate(1,sizeof(sample_t));commands=xQueueCreate(4,sizeof(command_t));if(!lock||!samples||!commands)return false;
  uint8_t mac[6]={0};esp_wifi_get_mac(WIFI_IF_STA,mac);snprintf(identity,sizeof(identity),"tracker_v2_%02x%02x%02x%02x%02x%02x",mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
  config=(config_t){.version=1,.port=1883,.interval=10,.discovery=true};snprintf(config.topic,sizeof(config.topic),"tracker/%s",identity);
- nvs_handle_t h;if(nvs_open("tracker_mqtt",NVS_READONLY,&h)==ESP_OK){config_t stored={0};size_t n=sizeof(stored);if(nvs_get_blob(h,"config",&stored,&n)==ESP_OK&&n==sizeof(stored)&&stored.version==1&&memchr(stored.host,0,sizeof(stored.host))&&memchr(stored.username,0,sizeof(stored.username))&&memchr(stored.password,0,sizeof(stored.password))&&memchr(stored.topic,0,sizeof(stored.topic))&&mqtt_settings_valid(stored.host,stored.topic,stored.port,stored.interval,stored.enabled))config=stored;memset(&stored,0,sizeof(stored));nvs_close(h);}revision=1;
+ nvs_handle_t h;if(nvs_open("tracker_mqtt",NVS_READONLY,&h)==ESP_OK){config_t stored={0};size_t n=sizeof(stored);if(nvs_get_blob(h,"config",&stored,&n)==ESP_OK&&n==sizeof(stored)&&tracker_mqtt_backup_valid(&stored,n))config=stored;memset(&stored,0,sizeof(stored));nvs_close(h);}revision=1;
  return xTaskCreate(worker,"tracker-mqtt",6144,NULL,3,NULL)==pdPASS;
 }
 void tracker_mqtt_snapshot(const tracker_gnss_t *g,int64_t now,bool joined){
  if(!samples)return;
+ xSemaphoreTake(lock,portMAX_DELAY);bool enabled=config.enabled;xSemaphoreGive(lock);if(!enabled)return;
  sample_t s={.at=now,.fix=tracker_gnss_has_fix(g,now),.lat=g->latitude,.lon=g->longitude,.alt=g->altitude,.used=g->used,.joined=joined};
  if(g->utc_confirmed&&g->utc_received_ms>=0&&now-g->utc_received_ms<10000)s.utc=g->utc_epoch_ms+now-g->utc_received_ms;
  tracker_sat_snapshot_t snap;tracker_sat_snapshot(g,now,0,&snap);for(unsigned i=0;i<snap.count;i++){tracker_sat_view_t *sat=&snap.satellites[i];if(sat->system>=1&&sat->system<=7){if(sat->flags&SAT_VISIBLE)s.visible[sat->system-1]++;if(sat->flags&SAT_USED)s.system_used[sat->system-1]++;}}
@@ -114,13 +115,21 @@ void tracker_mqtt_snapshot(const tracker_gnss_t *g,int64_t now,bool joined){
 }
 void tracker_mqtt_json(cJSON *root){
  if(!lock)return;
- config_t c=copy_config(NULL);cJSON *j=cJSON_AddObjectToObject(root,"mqtt");if(j){cJSON_AddBoolToObject(j,"enabled",c.enabled);cJSON_AddStringToObject(j,"host",c.host);cJSON_AddNumberToObject(j,"port",c.port);cJSON_AddNumberToObject(j,"interval_s",c.interval);cJSON_AddStringToObject(j,"username",c.username);cJSON_AddBoolToObject(j,"password_set",c.password[0]!=0);cJSON_AddStringToObject(j,"topic",c.topic);cJSON_AddBoolToObject(j,"discovery",c.discovery);cJSON_AddBoolToObject(j,"commands",c.commands);
+ config_t c=copy_config(NULL);cJSON *j=cJSON_AddObjectToObject(root,"mqtt");if(j){cJSON_AddStringToObject(j,"client_id",identity);cJSON_AddBoolToObject(j,"enabled",c.enabled);cJSON_AddStringToObject(j,"host",c.host);cJSON_AddNumberToObject(j,"port",c.port);cJSON_AddNumberToObject(j,"interval_s",c.interval);cJSON_AddStringToObject(j,"username",c.username);cJSON_AddBoolToObject(j,"password_set",c.password[0]!=0);cJSON_AddStringToObject(j,"topic",c.topic);cJSON_AddBoolToObject(j,"discovery",c.discovery);cJSON_AddBoolToObject(j,"commands",c.commands);
  portENTER_CRITICAL(&mux);bool on=connected,run=started;unsigned count=queued,re=reconnects,cmd=command_count;int error=last_error;portEXIT_CRITICAL(&mux);cJSON_AddStringToObject(j,"state",!c.enabled?"disabled":on?"connected":run?"connecting":"starting");cJSON_AddNumberToObject(j,"sent_messages",count);cJSON_AddNumberToObject(j,"connections",re);cJSON_AddNumberToObject(j,"commands_received",cmd);cJSON_AddNumberToObject(j,"last_error",error);}memset(&c,0,sizeof(c));
+}
+static esp_err_t reveal_password(httpd_req_t *req){
+ char password[sizeof(config.password)];xSemaphoreTake(lock,portMAX_DELAY);memcpy(password,config.password,sizeof(password));xSemaphoreGive(lock);
+ cJSON *j=cJSON_CreateObject();if(!j){memset(password,0,sizeof(password));return ESP_ERR_NO_MEM;}
+ cJSON_AddStringToObject(j,"password",password);memset(password,0,sizeof(password));char *body=cJSON_PrintUnformatted(j);cJSON_Delete(j);if(!body)return ESP_ERR_NO_MEM;
+ httpd_resp_set_type(req,"application/json");httpd_resp_set_hdr(req,"Cache-Control","no-store");esp_err_t result=httpd_resp_sendstr(req,body);memset(body,0,strlen(body));free(body);return result;
 }
 static esp_err_t configure(httpd_req_t *req){
  if(!tracker_request_authorized(req))return httpd_resp_send_err(req,HTTPD_403_FORBIDDEN,"Request token required");
  if(req->content_len<2||req->content_len>1024)return httpd_resp_send_err(req,HTTPD_400_BAD_REQUEST,"Invalid size");
- char body[1025];int n=0;while(n<req->content_len){int got=httpd_req_recv(req,body+n,req->content_len-n);if(got<=0)return ESP_FAIL;n+=got;}body[n]=0;cJSON *j=cJSON_Parse(body);memset(body,0,sizeof(body));config_t c=copy_config(NULL);bool valid=cJSON_IsObject(j);
+ char body[1025];size_t n=0;while(n<req->content_len){int got=httpd_req_recv(req,body+n,req->content_len-n);if(got<=0)return ESP_FAIL;n+=got;}body[n]=0;cJSON *j=cJSON_Parse(body);memset(body,0,sizeof(body));cJSON *action=cJSON_GetObjectItemCaseSensitive(j,"action");
+ if(action){bool reveal=cJSON_IsString(action)&&!strcmp(action->valuestring,"reveal");cJSON_Delete(j);return reveal?reveal_password(req):httpd_resp_send_err(req,HTTPD_400_BAD_REQUEST,"Invalid MQTT settings");}
+ config_t c=copy_config(NULL);bool valid=cJSON_IsObject(j);
  const char *strings[]={"host","username","password","topic"};char *targets[]={c.host,c.username,c.password,c.topic};size_t lengths[]={sizeof(c.host),sizeof(c.username),sizeof(c.password),sizeof(c.topic)};
  for(unsigned i=0;i<4;i++){cJSON *v=cJSON_GetObjectItemCaseSensitive(j,strings[i]);if(v){if(!cJSON_IsString(v)||strlen(v->valuestring)>=lengths[i])valid=false;else strcpy(targets[i],v->valuestring);}}
  const char *booleans[]={"enabled","discovery","commands"};bool *flags[]={&c.enabled,&c.discovery,&c.commands};for(unsigned i=0;i<3;i++){cJSON *v=cJSON_GetObjectItemCaseSensitive(j,booleans[i]);if(v){if(!cJSON_IsBool(v))valid=false;else *flags[i]=cJSON_IsTrue(v);}}

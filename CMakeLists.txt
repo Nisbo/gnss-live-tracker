@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 set(COMPONENTS main)
-set(PROJECT_VER "0.32.1")
+set(PROJECT_VER "0.32.2")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(tracker_v2_lorawan_test)

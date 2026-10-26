@@ -8,7 +8,7 @@ Firmware for the **Heltec Wireless Tracker V2 (ESP32-S3, 8 MiB flash)**, based o
 
 **Have a Wireless Tracker V1.2? Use the [original V1.2 project](https://github.com/jbjardine/HTIT-Tracker-v1.2-forIDF). This repository targets the V2.**
 
-Current preview: **0.32.1**. Clean USB installation and complete recording-data restore are still awaiting physical validation; see the [known limitations](docs/RELEASE-NOTES.md).
+Current preview: **0.32.2**. Clean USB installation and complete recording-data restore are still awaiting physical validation; see the [known limitations](docs/RELEASE-NOTES.md).
 
 - [Install and set up · English](docs/INSTALL.en.md)
 - [Installieren und einrichten · Deutsch](docs/INSTALL.de.md)

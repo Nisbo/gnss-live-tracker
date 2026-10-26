@@ -50,7 +50,7 @@ try:
     compile_run('display_server',[tests+'test_display_server.c',main+'gnss_nmea.c',main+'tracker_timezones.c',cj],['-Wno-sign-compare','-I'+tests+'display_stubs','-I'+tests+'backup_stubs','-I'+tests+'region_stubs'])
     for path in sorted((ROOT/tests).glob('test_*.cjs')):
         run('browser '+path.stem,[node,str(path)])
-    for name in ['test_history_http.py','test_i18n_bundle.py','test_timezones.py','test_hotspot_persistence.py']:
+    for name in ['test_history_http.py','test_i18n_bundle.py','test_timezones.py','test_hotspot_persistence.py','test_mqtt_server.py']:
         run(name,[sys.executable,tests+name])
     run('release packaging policy',[sys.executable,tests+'test_release.py'])
 finally:

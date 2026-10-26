@@ -2,7 +2,7 @@
 const TrackerNetwork=(()=>{
  const $=id=>document.getElementById(id),tr=(k,p)=>TrackerI18n.t('network.'+k,p);
  function age(seconds){const unit=seconds<60?'seconds':seconds<3600?'minutes':'hours',count=Math.floor(seconds/(unit==='seconds'?1:unit==='minutes'?60:3600));return tr('age_'+unit+(count===1?'_one':''),{count});}
- let raw=null,tab='live',wifiAction,getToken,initialized=false,loaded=false,loading=false,dirty=false,baseline='',timer,internetInitialized=false,lastPositions=null;
+ let raw=null,tab='live',wifiAction,getToken,initialized=false,loaded=false,loading=false,baseline='',timer,internetInitialized=false,lastPositions=null;
  function hide(){clearTimeout(timer);$('ap-password').type='password';$('ap-reveal').textContent=tr('show');$('ap-reveal').setAttribute('aria-pressed','false');}
  function warning(){if(!raw)return;$('ap-open-warning').hidden=!(raw.wifi?.hotspot_open||loaded&&!$('ap-password').value);}
  async function loadPassword(){
@@ -27,13 +27,13 @@ const TrackerNetwork=(()=>{
   $('internet-detail').textContent=n.age_s>=0?tr('last_check',{age:age(n.age_s),duration:n.duration_ms})+' · '+tr(!n.wifi_ip?'no_ip':n.http_status===204?'http_ok':'check_failed')+(n.state!==(n.http_status===204?2:1)&&!n.checking?tr('confirming'):'')+(n.event_pending?' · '+tr('pending'):''):tr('not_checked');
  }
  function init(options){
-  wifiAction=options.wifiAction;getToken=options.getToken;$('ap-retry').hidden=true;$('ap-password').addEventListener('input',()=>{dirty=true;warning();});$('ap-ssid').addEventListener('input',()=>{dirty=true;});
+  wifiAction=options.wifiAction;getToken=options.getToken;$('ap-retry').hidden=true;$('ap-password').addEventListener('input',warning);
   $('ap-reveal').addEventListener('click',()=>{if($('ap-password').type==='text'){hide();return;}$('ap-password').type='text';$('ap-reveal').textContent=tr('hide');$('ap-reveal').setAttribute('aria-pressed','true');timer=setTimeout(hide,30000);});
   $('ap-retry').addEventListener('click',loadPassword);document.addEventListener('visibilitychange',()=>{if(document.hidden)hide();});
   $('hotspot-form').addEventListener('submit',async e=>{
    e.preventDefault();if(!loaded)return;const data={action:'hotspot',ssid:$('ap-ssid').value,password:$('ap-password').value},changed=data.ssid!==raw.wifi.hotspot_ssid||data.password!==baseline;
    if(changed&&raw.wifi.setup_active&&!await TrackerDashboard.confirm(tr('save_title'),tr('save_warning'),tr('save'),false))return;
-   $('hotspot-save').disabled=true;try{await wifiAction(data);baseline=data.password;dirty=false;hide();$('hotspot-result').textContent=tr('saved');}catch(error){$('hotspot-result').textContent=tr('error',{error:error.message});}finally{$('hotspot-save').disabled=false;}
+   $('hotspot-save').disabled=true;try{await wifiAction(data);baseline=data.password;hide();$('hotspot-result').textContent=tr('saved');}catch(error){$('hotspot-result').textContent=tr('error',{error:error.message});}finally{$('hotspot-save').disabled=false;}
   });
   for(const [id,mode]of [['hotspot-auto','auto'],['hotspot-on','on'],['hotspot-off','off']])$(id).addEventListener('click',async()=>{
    const interrupts=raw?.wifi?.setup_active&&(mode==='off'||mode==='auto'&&raw?.wifi?.state==='connected');

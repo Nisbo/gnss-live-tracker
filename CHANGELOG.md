@@ -1,5 +1,12 @@
 # GNSS Live Tracker changelog
 
+## 0.32.2
+
+- Edit MQTT passwords in a prefilled masked field with temporary show/hide controls. Clearing the field removes the password; remove the separate removal checkbox.
+- Present data, command and Home Assistant topics in individual rows, including the exact discovery and birth topics. Keep the table stable during status refreshes.
+- Skip MQTT satellite snapshot work while MQTT is disabled, share stored-configuration validation and remove unused translations and form state.
+- Preserve MQTT settings layout, Wi-Fi profiles, LoRaWAN parameters and recordings.
+
 ## 0.32.1
 
 - Use singular check-age labels for one second, minute and hour in German and English.
