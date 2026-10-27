@@ -1,0 +1,2 @@
+# Matches the generated IANA 2026e timezone tables.
+tzdata==2026.5

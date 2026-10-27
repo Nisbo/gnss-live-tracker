@@ -21,12 +21,14 @@ jobs:
         shell: bash
         env:
           RELEASE_TAG: ${{ github.ref_name }}
+          PYTHONTZPATH: ""
         run: |
           set -euo pipefail
           . /opt/esp/idf/export.sh
           python -c 'import os,re; from pathlib import Path; v=re.search(r"set\(PROJECT_VER \"([^\"]+)\"",Path("CMakeLists.txt").read_text()).group(1); assert os.environ["RELEASE_TAG"]=="v"+v, "Tag and firmware version differ"'
-          idf.py build
+          python -m pip install -r tests/requirements.txt
           python scripts/test-v2.py
+          idf.py build
           python scripts/package-release.py
           python scripts/export-source.py "dist/gnss-live-tracker-${RELEASE_TAG}-source.zip"
       - name: Create draft only; publish after acceptance review

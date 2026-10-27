@@ -19,9 +19,12 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Host-only checks (no device or radio)
         shell: bash
+        env:
+          PYTHONTZPATH: ""
         run: |
           set -euo pipefail
           . /opt/esp/idf/export.sh
+          python -m pip install -r tests/requirements.txt
           python scripts/test-v2.py
       - name: Build V2 only
         shell: bash

@@ -5,7 +5,7 @@ End users do not need to compile firmware. Start with [English installation](INS
 ## Development dependencies
 
 - ESP-IDF **v5.4**, including its Git submodules and ESP32-S3 tools. Follow the official ESP-IDF installation instructions for your OS, then activate its environment (`export.sh` on Linux/macOS or the ESP-IDF terminal on Windows).
-- For host tests: Python 3, Node.js 22 (or a compatible modern Node release), and a C compiler (`cc`, GCC or Clang). The full timezone test also needs Python's IANA timezone database, supplied by the OS or the `tzdata` Python package.
+- For host tests: Python 3, Node.js 22 (or a compatible modern Node release), and a C compiler (`cc`, GCC or Clang). The full timezone test needs IANA 2026e, matching the included generated tables. Install `python -m pip install -r tests/requirements.txt`; `PYTHONTZPATH=""` selects that pinned Python database instead of the OS database. CI uses this setting so minimal Linux containers also provide historical timezone aliases.
 - For packaging: Python with `esptool` 4.x (available in the ESP-IDF v5.4 environment).
 
 This repository contains all project-specific sources, generated web/translation/timezone assets and its TTN decoder. It does not bundle ESP-IDF or compiler/OS tools. Normal builds do not regenerate timezone data or download orbit/map assets.
