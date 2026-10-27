@@ -42,6 +42,8 @@ The interface is served by the tracker. Maps require Internet access in the view
 
 ## Installation files
 
+Development builds are available under [Actions → V2 build and host checks](https://github.com/Nisbo/gnss-live-tracker/actions/workflows/build.yml). Open a successful run and download **gnss-live-tracker-v2-candidate** from **Artifacts** at the bottom of its summary (GitHub sign-in required). These are test builds, not a stable release. Failed runs do not provide an installation package.
+
 Use a matching version of the release files:
 
 | File | Use |

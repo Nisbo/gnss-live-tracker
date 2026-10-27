@@ -1,4 +1,4 @@
-from test_support import ROOT, CJSON, tmp
+from test_support import ROOT, CJSON, CC, tmp
 """Reproducible host-only US915 checks; never connects to a tracker or radio."""
 from pathlib import Path
 import json, os, shutil, subprocess, sys, re
@@ -7,7 +7,7 @@ os.chdir(root)
 node=shutil.which('node')
 if not node: raise SystemExit('Node.js is required for browser/decoder tests')
 if not CJSON or not Path(CJSON,'cJSON.c').is_file(): raise SystemExit('Set IDF_PATH to ESP-IDF v5.4 before running host tests')
-cc=os.environ.get('CC','clang');tests='tests';main='main';mac='components/loramac';cjson=CJSON
+cc=CC;tests='tests';main='main';mac='components/loramac';cjson=CJSON
 version=re.search(r'set\(PROJECT_VER "([^"]+)"',Path('CMakeLists.txt').read_text()).group(1)
 reports=[]
 def run(name,args):
