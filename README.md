@@ -6,7 +6,7 @@
 
 GNSS tracking, satellite views and LoRaWAN for the **Heltec Wireless Tracker V2** — with a local web interface in English and German.
 
-Based on [HTIT Tracker v1.2 for ESP-IDF](https://github.com/jbjardine/HTIT-Tracker-v1.2-forIDF), adapted and extended for the V2 hardware. **Using a Wireless Tracker V1.2? Please use the [original V1.2 project](https://github.com/jbjardine/HTIT-Tracker-v1.2-forIDF). This repository is for V2 boards.**
+Based on [HTIT Tracker v1.2 for ESP-IDF](https://github.com/jbjardine/HTIT-Tracker-v1.2-forIDF), adapted and extended for the V2 hardware. **Have a Wireless Tracker V1.2? Please use the [original V1.2 project](https://github.com/jbjardine/HTIT-Tracker-v1.2-forIDF). This repository is for V2 boards.**
 
 [![Build and checks](https://github.com/Nisbo/gnss-live-tracker/actions/workflows/build.yml/badge.svg)](https://github.com/Nisbo/gnss-live-tracker/actions/workflows/build.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
