@@ -89,10 +89,10 @@ Follow the complete **[English setup guide](docs/INSTALL.en.md)** or **[deutsche
 
 <p align="center">
   <a href="https://heltec.org/project/wireless-tracker-v2/">
-    <img src="https://heltec.org/wp-content/uploads/2025/09/tracker01.png" alt="Heltec Wireless Tracker V2 product photo" width="300">
+    <img src="docs/images/heltec-wireless-tracker-v2.png" alt="Heltec Wireless Tracker V2 product photo" width="300" height="300">
   </a>
   <br>
-  <sub>Product image: Heltec Automation, externally hosted.</sub>
+  <sub>Product image: <a href="https://heltec.org/wp-content/uploads/2025/09/tracker01.png">Heltec Automation</a>.</sub>
 </p>
 
 Target board: **Heltec Wireless Tracker V2**, with an ESP32-S3, 8 MiB flash, SX1262 LoRa radio, UC6580 GNSS receiver and 160 × 80 TFT display.
