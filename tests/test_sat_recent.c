@@ -15,7 +15,8 @@ static void check(sat_ring_t *ring,uint32_t since){
  memcpy(snapshot,flash,sizeof(flash));unsigned before_writes=writes,before_erases=erases;uint32_t before=UINT32_MAX,seq=UINT32_MAX;size_t seen=0;
  while(1){sat_record_t out[129];size_t count=sat_ring_read_recent(ring,before,seq,since,out,129);assert(count<=129);size_t page=count>128?128:count;
   for(size_t i=0;i<page;i++){assert(seen<total&&all[seen].utc_s>=since);assert(!memcmp(&all[seen++],&out[i],sizeof(*out)));}
-  if(count<=128)break;before=out[page-1].utc_s;seq=out[page-1].seq;
+  if(count<=128)break;
+  before=out[page-1].utc_s;seq=out[page-1].seq;
  }
  while(seen<total&&all[seen].utc_s>=since){assert(!"eligible point omitted");}
  assert(writes==before_writes&&erases==before_erases&&!memcmp(snapshot,flash,sizeof(flash)));free(all);
