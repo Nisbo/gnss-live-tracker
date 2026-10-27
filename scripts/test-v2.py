@@ -29,7 +29,7 @@ def run(name,command,output=None):
 def compile_run(name,sources,flags=(),output=None):
     includes=['main','components/loramac','components/loramac/loramac','components/st7735','components/sx1262',CJSON]
     binary=tmp('tracker-'+name+'-test')
-    run(name+' build',[cc,'-std=c11','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations',*['-I'+p for p in includes],*flags,*sources,'-lm','-o',binary])
+    run(name+' build',[cc,'-std=c11','-D_POSIX_C_SOURCE=200809L','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations',*['-I'+p for p in includes],*flags,*sources,'-lm','-o',binary])
     run(name,[binary],output)
 
 try:

@@ -17,18 +17,18 @@ jobs:
           node-version: '22'
       - name: Trust checkout ownership
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - name: Build V2 only
-        shell: bash
-        run: |
-          set -euo pipefail
-          . /opt/esp/idf/export.sh
-          idf.py build
       - name: Host-only checks (no device or radio)
         shell: bash
         run: |
           set -euo pipefail
           . /opt/esp/idf/export.sh
           python scripts/test-v2.py
+      - name: Build V2 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          . /opt/esp/idf/export.sh
+          idf.py build
       - name: Create matching installation and OTA package
         shell: bash
         run: |
